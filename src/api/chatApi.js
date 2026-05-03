@@ -1,4 +1,7 @@
 import axiosInstance from "./axios";
 
-export const getChatHistory = (chatRoomId) =>
-  axiosInstance.get(`/api/chats?chatRoomId=${chatRoomId}`);
+export const getChatHistory = (chatRoomId, beforeChatId = null) => {
+  const params = { chatRoomId };
+  if (beforeChatId !== null) params.beforeChatId = beforeChatId;
+  return axiosInstance.get("/api/chats", { params });
+};

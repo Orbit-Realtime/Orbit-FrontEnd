@@ -24,8 +24,13 @@ export function AuthProvider({ children }) {
     setAuth(null);
   };
 
+  const updateNickname = (nickname) => {
+    sessionStorage.setItem("nickname", nickname);
+    setAuth((prev) => ({ ...prev, nickname }));
+  };
+
   return (
-    <AuthContext.Provider value={{ auth, signin, signout }}>
+    <AuthContext.Provider value={{ auth, signin, signout, updateNickname }}>
       {children}
     </AuthContext.Provider>
   );

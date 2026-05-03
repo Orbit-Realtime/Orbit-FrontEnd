@@ -8,3 +8,9 @@ export const login = (username, password) =>
 
 export const getMembers = () =>
   axiosInstance.get("/api/members");
+
+export const changeNickname = (nickname) =>
+  axiosInstance.patch("/api/member/nickname", { nickname });
+
+export const changePassword = (currentPassword, newPassword) =>
+  axiosInstance.patch("/api/member/password", { currentPassword, newPassword });
