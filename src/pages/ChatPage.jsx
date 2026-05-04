@@ -104,7 +104,7 @@ export default function ChatPage() {
                 lastMessage: data.lastMessage,
                 createdDate: data.createdDate,
                 lastChatId: data.lastChatId,
-                unreadMessageCount: data.chatRoomId === selectedRoomId ? 0 : data.unreadMessageCount,
+                unreadMessageCount: data.unreadMessageCount,
               };
             }));
           });
