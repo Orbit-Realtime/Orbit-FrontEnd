@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getDiscussion, createDiscussion } from "../../api/discussionApi";
+import { getDiscussion, createDiscussion, getDiscussionMessages } from "../../api/discussionApi";
 import { formatMessageTime } from "../../utils/formatTime";
 
 export default function DiscussionPanel({ message, onClose }) {
@@ -9,6 +9,10 @@ export default function DiscussionPanel({ message, onClose }) {
   const [discussion, setDiscussion] = useState(null);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
+
+  const [discussionMessages, setDiscussionMessages] = useState([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState(null);
 
   const loadDiscussion = useCallback(() => {
     setStatus("loading");
@@ -29,6 +33,29 @@ export default function DiscussionPanel({ message, onClose }) {
   }, [messageId]);
 
   useEffect(() => { loadDiscussion(); }, [loadDiscussion]);
+
+  const discussionId = discussion?.discussionId ?? null;
+
+  useEffect(() => {
+    if (!discussionId) {
+      setDiscussionMessages([]);
+      setMessagesError(null);
+      setMessagesLoading(false);
+      return;
+    }
+    setMessagesLoading(true);
+    setMessagesError(null);
+    getDiscussionMessages(discussionId)
+      .then((result) => {
+        setDiscussionMessages(result.data);
+      })
+      .catch(() => {
+        setMessagesError("메시지를 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        setMessagesLoading(false);
+      });
+  }, [discussionId]);
 
   const handleCreate = async () => {
     if (creating) return;
@@ -115,14 +142,36 @@ export default function DiscussionPanel({ message, onClose }) {
         )}
 
         {status === "loaded" && discussion && (
-          <div className="flex flex-col items-center justify-center flex-1 px-4 gap-2">
-            <svg viewBox="0 0 24 24" className="w-8 h-8 fill-neutral-600">
-              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
-            </svg>
-            <p className="text-neutral-400 text-sm text-center">Discussion이 열려 있습니다.</p>
-            <p className="text-xs text-neutral-500 text-center">
-              Discussion 메시지 기능이 준비 중입니다.
-            </p>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {messagesLoading && (
+              <div className="flex items-center justify-center flex-1">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+
+            {!messagesLoading && messagesError && (
+              <div className="flex items-center justify-center flex-1 px-4">
+                <p className="text-sm text-neutral-500 text-center">{messagesError}</p>
+              </div>
+            )}
+
+            {!messagesLoading && !messagesError && discussionMessages.length === 0 && (
+              <div className="flex items-center justify-center flex-1 px-4">
+                <p className="text-sm text-neutral-500 text-center">아직 Discussion 메시지가 없습니다.</p>
+              </div>
+            )}
+
+            {!messagesLoading && !messagesError && discussionMessages.length > 0 && (
+              <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-3">
+                {discussionMessages.map((dm) => (
+                  <div key={dm.discussionMessageId} className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-neutral-300">{dm.senderNickname}</span>
+                    <p className="text-sm text-neutral-200 break-words">{dm.content}</p>
+                    <span className="text-xs text-neutral-500">{formatMessageTime(dm.createdDate)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

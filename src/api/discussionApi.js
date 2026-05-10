@@ -5,3 +5,6 @@ export const getDiscussion = (messageId) =>
 
 export const createDiscussion = (messageId) =>
   axiosInstance.post(`/api/messages/${messageId}/discussion`);
+
+export const getDiscussionMessages = (discussionId) =>
+  axiosInstance.get(`/api/discussions/${discussionId}/messages`);
