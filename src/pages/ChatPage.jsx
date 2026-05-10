@@ -9,6 +9,7 @@ import { changeNickname, changePassword } from "../api/memberApi";
 import ChatRoomList from "../components/chat/ChatRoomList";
 import ChatWindow from "../components/chat/ChatWindow";
 import MemberPanel from "../components/chat/MemberPanel";
+import DiscussionPanel from "../components/chat/DiscussionPanel";
 import CreateSpaceModal from "../components/chat/CreateSpaceModal";
 import ChangePasswordModal from "../components/chat/ChangePasswordModal";
 
@@ -28,7 +29,8 @@ export default function ChatPage() {
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [editNickname, setEditNickname] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [rightPanel, setRightPanel] = useState(null); // null | "members" | "discussion"
+  const [selectedDiscussionMessage, setSelectedDiscussionMessage] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const nicknameInputRef = useRef(null);
 
@@ -211,6 +213,8 @@ export default function ChatPage() {
   const handleSelectRoom = useCallback(
     (roomId) => {
       if (roomId === selectedRoomId) return;
+      setRightPanel(null);
+      setSelectedDiscussionMessage(null);
       memberLastReadRef.current = {};
       setSelectedRoomId(roomId);
       setMessages([]);
@@ -269,7 +273,8 @@ export default function ChatPage() {
     try {
       await leaveChatRoom(roomId);
       setSelectedRoomId(null);
-      setShowRightPanel(false);
+      setRightPanel(null);
+      setSelectedDiscussionMessage(null);
       setChatRooms((prev) => prev.filter((r) => r.chatRoomId !== roomId));
     } catch (e) {
       // ignore
@@ -453,8 +458,12 @@ export default function ChatPage() {
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}
-              membersOpen={showRightPanel}
-              onToggleMembers={() => setShowRightPanel((v) => !v)}
+              membersOpen={rightPanel === "members"}
+              onToggleMembers={() => setRightPanel((p) => (p === "members" ? null : "members"))}
+              onOpenDiscussion={(msg) => {
+                setSelectedDiscussionMessage(msg);
+                setRightPanel("discussion");
+              }}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-neutral-500">
@@ -464,10 +473,20 @@ export default function ChatPage() {
         </div>
 
         {/* ── Right Panel — 멤버 목록 ── */}
-        {showRightPanel && selectedRoomId && (
+        {rightPanel === "members" && selectedRoomId && (
           <MemberPanel
             chatRoomId={selectedRoomId}
-            onClose={() => setShowRightPanel(false)}
+            onClose={() => setRightPanel(null)}
+          />
+        )}
+
+        {rightPanel === "discussion" && selectedDiscussionMessage && (
+          <DiscussionPanel
+            message={selectedDiscussionMessage}
+            onClose={() => {
+              setRightPanel(null);
+              setSelectedDiscussionMessage(null);
+            }}
           />
         )}
       </div>
