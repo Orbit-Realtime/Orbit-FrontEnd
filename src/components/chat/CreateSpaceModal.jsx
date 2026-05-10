@@ -55,7 +55,7 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
           .map((m) => m.nickname)
           .join(", ");
       const result = await createChatRoom(receiverIds, effectiveTitle);
-      const createdRoomId = result?.data?.data?.chatRoomId ?? null;
+      const createdRoomId = result?.data?.chatRoomId ?? null;
       onCreated(createdRoomId);
     } catch (e) {
       // ignore
