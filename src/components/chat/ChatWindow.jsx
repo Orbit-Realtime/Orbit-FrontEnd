@@ -1,10 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import MessageItem from "./MessageItem";
-import MemberPanel from "./MemberPanel";
 import { formatDateDivider } from "../../utils/formatTime";
 
-export default function ChatWindow({ room, messages, lastReadChatId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore }) {
+export default function ChatWindow({ room, messages, lastReadChatId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, membersOpen, onToggleMembers }) {
   const { auth } = useAuth();
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
@@ -16,7 +15,6 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
   const isLoadingMoreRef = useRef(isLoadingMore);
   const [text, setText] = useState("");
   const [newMessageCount, setNewMessageCount] = useState(0);
-  const [showMembers, setShowMembers] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [leaveConfirm, setLeaveConfirm] = useState(false);
@@ -95,9 +93,8 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
     }
   }, [isLoadingMore]);
 
-  // 방이 바뀌면 멤버 패널/편집 상태 초기화
+  // 방이 바뀌면 편집 상태 초기화
   useEffect(() => {
-    setShowMembers(false);
     setIsEditingTitle(false);
     setLeaveConfirm(false);
   }, [room?.chatRoomId]);
@@ -205,10 +202,10 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
 
           {/* 멤버 보기 버튼 */}
           <button
-            onClick={() => setShowMembers((v) => !v)}
+            onClick={onToggleMembers}
             title="멤버 목록"
             className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${
-              showMembers ? "bg-neutral-600 text-white" : "text-neutral-400 hover:text-white hover:bg-neutral-700"
+              membersOpen ? "bg-neutral-600 text-white" : "text-neutral-400 hover:text-white hover:bg-neutral-700"
             }`}
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
@@ -337,14 +334,6 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
           </div>
         </div>
       </div>
-
-      {/* 멤버 패널 */}
-      {showMembers && (
-        <MemberPanel
-          chatRoomId={room?.chatRoomId}
-          onClose={() => setShowMembers(false)}
-        />
-      )}
 
       {/* 나가기 확인 다이얼로그 */}
       {leaveConfirm && (

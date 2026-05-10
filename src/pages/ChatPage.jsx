@@ -8,10 +8,9 @@ import { getChatHistory } from "../api/chatApi";
 import { changeNickname, changePassword } from "../api/memberApi";
 import ChatRoomList from "../components/chat/ChatRoomList";
 import ChatWindow from "../components/chat/ChatWindow";
-import MemberList from "../components/chat/MemberList";
+import MemberPanel from "../components/chat/MemberPanel";
+import CreateSpaceModal from "../components/chat/CreateSpaceModal";
 import ChangePasswordModal from "../components/chat/ChangePasswordModal";
-
-const TAB = { ROOMS: "rooms", MEMBERS: "members" };
 
 const sortRooms = (rooms) =>
   [...rooms].sort((a, b) => {
@@ -25,11 +24,15 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const { auth, signout, updateNickname } = useAuth();
 
-  const [tab, setTab] = useState(TAB.ROOMS);
+  // UI 상태
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [editNickname, setEditNickname] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const nicknameInputRef = useRef(null);
+
+  // 데이터 상태 — realtime 연동 (위치 유지)
   const [chatRooms, setChatRooms] = useState([]);
   const [roomsError, setRoomsError] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
@@ -42,14 +45,11 @@ export default function ChatPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [wsError, setWsError] = useState(null);
 
-  // 재연결 감지용: connected false→true 전환 시 ENTER_ROOM 재전송에 사용
+  // refs — realtime 연동 (위치 유지)
   const selectedRoomIdRef = useRef(null);
   const prevConnectedRef = useRef(false);
-  // 초기 연결과 재연결 구분 (초기 마운트 getChatRooms와 재연결 getChatRooms 중복 방지)
   const isInitialConnectRef = useRef(true);
-  // getChatHistory 세대 번호 (재연결 연속 발생 시 stale 응답 폐기용)
   const historyFetchIdRef = useRef(0);
-  // memberId별 마지막 처리한 currentLastReadChatId 추적 (READ_EVENT 멱등성 보장)
   const memberLastReadRef = useRef({});
 
   // 채팅방 목록 초기 조회
@@ -269,6 +269,7 @@ export default function ChatPage() {
     try {
       await leaveChatRoom(roomId);
       setSelectedRoomId(null);
+      setShowRightPanel(false);
       setChatRooms((prev) => prev.filter((r) => r.chatRoomId !== roomId));
     } catch (e) {
       // ignore
@@ -290,13 +291,14 @@ export default function ChatPage() {
     }
   }, [selectedRoomId]);
 
-  // 채팅방 생성 완료: 목록 갱신 + 채팅 탭으로 이동
-  const handleRoomCreated = useCallback(() => {
+  // Space 생성 완료: modal 닫기 + 목록 갱신 + 생성된 Space 자동 선택
+  const handleSpaceCreated = useCallback((roomId) => {
+    setShowCreateModal(false);
     refreshChatRooms();
-    setTab(TAB.ROOMS);
-  }, [refreshChatRooms]);
+    if (roomId) handleSelectRoom(roomId);
+  }, [refreshChatRooms, handleSelectRoom]);
 
-  // 닉네임 편집 시작
+  // 닉네임 편집
   const startEditNickname = () => {
     setEditNickname(auth?.nickname ?? "");
     setIsEditingNickname(true);
@@ -358,80 +360,59 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* 본문 */}
+      {/* 본문 — 3-column layout */}
       <div className="flex flex-1 overflow-hidden">
-      {/* 좌측 사이드바 */}
-      <div className={`flex-col border-r border-neutral-700 flex-shrink-0 w-full md:w-80 ${selectedRoomId ? "hidden md:flex" : "flex"}`}>
-        {/* 헤더 */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-700">
-          <div className="flex-1 min-w-0">
-            {isEditingNickname ? (
-              <input
-                ref={nicknameInputRef}
-                value={editNickname}
-                onChange={(e) => setEditNickname(e.target.value)}
-                onBlur={commitNickname}
-                onKeyDown={handleNicknameKeyDown}
-                className="w-full bg-neutral-700 text-white text-sm font-bold px-2 py-0.5 rounded outline-none border border-neutral-500"
-              />
-            ) : (
-              <button
-                onClick={startEditNickname}
-                className="font-bold text-white hover:text-neutral-300 transition-colors text-left truncate w-full"
-                title="클릭하여 닉네임 변경"
-              >
-                {auth?.nickname}
-              </button>
-            )}
-            <p className="text-xs text-neutral-500 mt-0.5">
-              {connected ? "🟢 온라인" : "🔴 오프라인"}
-            </p>
+
+        {/* ── Sidebar ── */}
+        <div className="flex flex-col w-64 border-r border-neutral-700 flex-shrink-0">
+
+          {/* 사용자 헤더 */}
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-700 flex-shrink-0">
+            <div className="flex-1 min-w-0">
+              {isEditingNickname ? (
+                <input
+                  ref={nicknameInputRef}
+                  value={editNickname}
+                  onChange={(e) => setEditNickname(e.target.value)}
+                  onBlur={commitNickname}
+                  onKeyDown={handleNicknameKeyDown}
+                  className="w-full bg-neutral-700 text-white text-sm font-bold px-2 py-0.5 rounded outline-none border border-neutral-500"
+                />
+              ) : (
+                <button
+                  onClick={startEditNickname}
+                  className="font-bold text-white hover:text-neutral-300 transition-colors text-left truncate w-full"
+                  title="클릭하여 닉네임 변경"
+                >
+                  {auth?.nickname}
+                </button>
+              )}
+              <p className="text-xs text-neutral-500 mt-0.5">
+                {connected ? "🟢 온라인" : "🔴 오프라인"}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              title="비밀번호 변경"
+              className="flex-shrink-0 p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+              </svg>
+            </button>
+            <button
+              onClick={handleSignout}
+              title="로그아웃"
+              className="flex-shrink-0 p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
+              </svg>
+            </button>
           </div>
-          <button
-            onClick={() => setShowPasswordModal(true)}
-            title="비밀번호 변경"
-            className="flex-shrink-0 p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-            </svg>
-          </button>
-          <button
-            onClick={handleSignout}
-            title="로그아웃"
-            className="flex-shrink-0 p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-              <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
-            </svg>
-          </button>
-        </div>
 
-        {/* 탭 */}
-        <div className="flex border-b border-neutral-700">
-          <button
-            onClick={() => setTab(TAB.ROOMS)}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors
-              ${tab === TAB.ROOMS
-                ? "text-white border-b-2 border-blue-500"
-                : "text-neutral-500 hover:text-neutral-300"}`}
-          >
-            채팅
-          </button>
-          <button
-            onClick={() => setTab(TAB.MEMBERS)}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors
-              ${tab === TAB.MEMBERS
-                ? "text-white border-b-2 border-blue-500"
-                : "text-neutral-500 hover:text-neutral-300"}`}
-          >
-            친구
-          </button>
-        </div>
-
-        {/* 탭 콘텐츠 */}
-        <div className="flex-1 overflow-hidden">
-          {tab === TAB.ROOMS ? (
+          {/* Space 목록 */}
+          <div className="flex-1 overflow-hidden">
             <ChatRoomList
               chatRooms={chatRooms}
               roomsError={roomsError}
@@ -439,37 +420,64 @@ export default function ChatPage() {
               selectedRoomId={selectedRoomId}
               onSelectRoom={handleSelectRoom}
             />
+          </div>
+
+          {/* New Space 버튼 */}
+          <div className="flex-shrink-0 border-t border-neutral-700 px-3 py-3">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-neutral-700 hover:bg-neutral-600 text-sm text-white transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+              </svg>
+              New Space
+            </button>
+          </div>
+        </div>
+
+        {/* ── Main Conversation ── */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {selectedRoomId ? (
+            <ChatWindow
+              room={chatRooms.find((r) => r.chatRoomId === selectedRoomId)}
+              messages={messages}
+              lastReadChatId={lastReadChatId}
+              onSend={handleSend}
+              loading={historyLoading}
+              historyError={historyError}
+              onBack={() => setSelectedRoomId(null)}
+              onLeave={handleLeaveRoom}
+              onRename={handleRenameRoom}
+              connected={connected}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={handleLoadMore}
+              membersOpen={showRightPanel}
+              onToggleMembers={() => setShowRightPanel((v) => !v)}
+            />
           ) : (
-            <MemberList onRoomCreated={handleRoomCreated} />
+            <div className="flex items-center justify-center h-full text-neutral-500">
+              대화를 선택하세요.
+            </div>
           )}
         </div>
-      </div>
 
-      {/* 우측 채팅 영역 */}
-      <div className={`flex-1 flex-col overflow-hidden ${selectedRoomId ? "flex" : "hidden md:flex"}`}>
-        {selectedRoomId ? (
-          <ChatWindow
-            room={chatRooms.find((r) => r.chatRoomId === selectedRoomId)}
-            messages={messages}
-            lastReadChatId={lastReadChatId}
-            onSend={handleSend}
-            loading={historyLoading}
-            historyError={historyError}
-            onBack={() => setSelectedRoomId(null)}
-            onLeave={handleLeaveRoom}
-            onRename={handleRenameRoom}
-            connected={connected}
-            hasMore={hasMore}
-            isLoadingMore={isLoadingMore}
-            onLoadMore={handleLoadMore}
+        {/* ── Right Panel — 멤버 목록 ── */}
+        {showRightPanel && selectedRoomId && (
+          <MemberPanel
+            chatRoomId={selectedRoomId}
+            onClose={() => setShowRightPanel(false)}
           />
-        ) : (
-          <div className="flex items-center justify-center h-full text-neutral-500">
-            채팅방을 선택하세요.
-          </div>
         )}
       </div>
-      </div>
+
+      {showCreateModal && (
+        <CreateSpaceModal
+          onCreated={handleSpaceCreated}
+          onClose={() => setShowCreateModal(false)}
+        />
+      )}
 
       {showPasswordModal && (
         <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
