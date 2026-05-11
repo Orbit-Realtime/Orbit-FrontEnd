@@ -502,6 +502,7 @@ export default function ChatPage() {
             incomingDiscussionEvents={incomingDiscussionEvents}
             onConsumeDiscussionEvents={consumeDiscussionEvents}
             sendDiscussionMessage={sendDiscussionMessage}
+            connected={connected}
             onClose={() => {
               setRightPanel(null);
               setSelectedDiscussionMessage(null);

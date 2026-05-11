@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { getDiscussion, createDiscussion, getDiscussionMessages } from "../../api/discussionApi";
 import { formatMessageTime } from "../../utils/formatTime";
 
-export default function DiscussionPanel({ message, onClose, incomingDiscussionEvents, onConsumeDiscussionEvents, sendDiscussionMessage }) {
+export default function DiscussionPanel({ message, onClose, incomingDiscussionEvents, onConsumeDiscussionEvents, sendDiscussionMessage, connected }) {
   const messageId = message.chatId;
 
   const [status, setStatus] = useState("loading"); // "loading" | "not_found" | "error" | "loaded"
@@ -20,6 +20,8 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   // 컴포넌트 마운트마다 초기화되므로 panel 재오픈 시 자동 리셋된다.
   const processedMessageIdsRef = useRef(new Set());
   const isComposingRef = useRef(false);
+  // reconnect 감지용: null=초기 마운트, false=단절, true=연결
+  const prevConnectedRef = useRef(null);
 
   const loadDiscussion = useCallback(() => {
     setStatus("loading");
@@ -42,6 +44,16 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   useEffect(() => { loadDiscussion(); }, [loadDiscussion]);
 
   const discussionId = discussion?.discussionId ?? null;
+
+  // 서버 기준으로 메시지 목록을 replace하고 processedIds를 rebuild한다.
+  // 초기 로드·reconnect re-sync 공통 사용. 에러는 호출부에서 처리한다.
+  const syncDiscussionMessages = useCallback(async () => {
+    if (!discussionId) return;
+    const result = await getDiscussionMessages(discussionId);
+    const messages = result.data ?? [];
+    processedMessageIdsRef.current = new Set(messages.map((m) => m.discussionMessageId));
+    setDiscussionMessages(messages);
+  }, [discussionId]);
 
   // Queue에서 현재 discussionId와 일치하는 이벤트만 append한다.
   // 다른 discussionId 이벤트는 MVP 정책상 소비·폐기한다.
@@ -66,6 +78,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
   useEffect(() => {
     if (!discussionId) {
+      processedMessageIdsRef.current = new Set();
       setDiscussionMessages([]);
       setMessagesError(null);
       setMessagesLoading(false);
@@ -73,17 +86,28 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
     }
     setMessagesLoading(true);
     setMessagesError(null);
-    getDiscussionMessages(discussionId)
-      .then((result) => {
-        setDiscussionMessages(result.data);
-      })
+    syncDiscussionMessages()
       .catch(() => {
         setMessagesError("메시지를 불러오지 못했습니다.");
       })
       .finally(() => {
         setMessagesLoading(false);
       });
-  }, [discussionId]);
+  }, [discussionId, syncDiscussionMessages]);
+
+  // reconnect 감지: status=loaded + discussionId 확정 상태에서만 re-sync 허용.
+  // 조회 중·not_found·error·생성 중 상태에서는 실행하지 않는다.
+  useEffect(() => {
+    const wasDisconnected = prevConnectedRef.current === false;
+    const isReconnected = connected === true;
+    const canSync = status === "loaded" && discussion?.discussionId;
+
+    if (wasDisconnected && isReconnected && canSync) {
+      syncDiscussionMessages().catch(() => {});
+    }
+
+    prevConnectedRef.current = connected;
+  }, [connected, status, discussion, syncDiscussionMessages]);
 
   const handleSendMessage = useCallback(() => {
     const trimmed = inputContent.trim();
