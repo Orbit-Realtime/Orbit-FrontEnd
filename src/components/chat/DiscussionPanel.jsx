@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getDiscussion, createDiscussion, getDiscussionMessages } from "../../api/discussionApi";
 import { formatMessageTime } from "../../utils/formatTime";
+import MessageContentRenderer from "./MessageContentRenderer";
 
 export default function DiscussionPanel({ message, onClose, incomingDiscussionEvents, onConsumeDiscussionEvents, sendDiscussionMessage, connected }) {
   const messageId = message.chatId;
@@ -236,7 +237,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
                   {discussionMessages.map((dm) => (
                     <div key={dm.discussionMessageId} className="flex flex-col gap-0.5">
                       <span className="text-xs font-medium text-neutral-300">{dm.senderNickname}</span>
-                      <p className="text-sm text-neutral-200 break-words">{dm.content}</p>
+                      <MessageContentRenderer content={dm.content} className="text-sm text-neutral-200" />
                       <span className="text-xs text-neutral-500">{formatMessageTime(dm.createdDate)}</span>
                     </div>
                   ))}
