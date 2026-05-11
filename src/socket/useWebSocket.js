@@ -104,5 +104,12 @@ export function useWebSocket(onMessage, onConnected) {
     );
   }, []);
 
-  return { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive };
+  const sendDiscussionMessage = useCallback((discussionId, content) => {
+    if (socketRef.current?.readyState !== WebSocket.OPEN) return;
+    socketRef.current.send(
+      JSON.stringify({ messageType: "DISCUSSION_MESSAGE", discussionId, content })
+    );
+  }, []);
+
+  return { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage };
 }

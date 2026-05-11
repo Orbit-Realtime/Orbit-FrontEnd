@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getDiscussion, createDiscussion, getDiscussionMessages } from "../../api/discussionApi";
 import { formatMessageTime } from "../../utils/formatTime";
 
-export default function DiscussionPanel({ message, onClose }) {
+export default function DiscussionPanel({ message, onClose, incomingDiscussionEvents, onConsumeDiscussionEvents, sendDiscussionMessage }) {
   const messageId = message.chatId;
 
   const [status, setStatus] = useState("loading"); // "loading" | "not_found" | "error" | "loaded"
@@ -13,6 +13,12 @@ export default function DiscussionPanel({ message, onClose }) {
   const [discussionMessages, setDiscussionMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [messagesError, setMessagesError] = useState(null);
+
+  const [inputContent, setInputContent] = useState("");
+
+  // 이미 append된 discussionMessageId를 추적해 중복 append를 방지한다.
+  // 컴포넌트 마운트마다 초기화되므로 panel 재오픈 시 자동 리셋된다.
+  const processedMessageIdsRef = useRef(new Set());
 
   const loadDiscussion = useCallback(() => {
     setStatus("loading");
@@ -36,6 +42,27 @@ export default function DiscussionPanel({ message, onClose }) {
 
   const discussionId = discussion?.discussionId ?? null;
 
+  // Queue에서 현재 discussionId와 일치하는 이벤트만 append한다.
+  // 다른 discussionId 이벤트는 MVP 정책상 소비·폐기한다.
+  // discussionMessageId 기준 중복 append를 processedMessageIdsRef로 방어한다.
+  useEffect(() => {
+    if (!incomingDiscussionEvents.length || !discussionId) return;
+
+    const toAppend = incomingDiscussionEvents.filter(
+      (e) =>
+        e.discussionId === discussionId &&
+        !processedMessageIdsRef.current.has(e.discussionMessageId)
+    );
+
+    // 처리 여부와 무관하게 queue에서 소비한다 (다른 discussion 이벤트 포함).
+    onConsumeDiscussionEvents(incomingDiscussionEvents.map((e) => e.discussionMessageId));
+
+    if (toAppend.length === 0) return;
+
+    toAppend.forEach((e) => processedMessageIdsRef.current.add(e.discussionMessageId));
+    setDiscussionMessages((prev) => [...prev, ...toAppend]);
+  }, [incomingDiscussionEvents, discussionId, onConsumeDiscussionEvents]);
+
   useEffect(() => {
     if (!discussionId) {
       setDiscussionMessages([]);
@@ -56,6 +83,20 @@ export default function DiscussionPanel({ message, onClose }) {
         setMessagesLoading(false);
       });
   }, [discussionId]);
+
+  const handleSendMessage = useCallback(() => {
+    const trimmed = inputContent.trim();
+    if (!trimmed || !discussion || !sendDiscussionMessage) return;
+    sendDiscussionMessage(discussion.discussionId, trimmed);
+    setInputContent("");
+  }, [inputContent, discussion, sendDiscussionMessage]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   const handleCreate = async () => {
     if (creating) return;
@@ -143,35 +184,60 @@ export default function DiscussionPanel({ message, onClose }) {
 
         {status === "loaded" && discussion && (
           <div className="flex-1 flex flex-col overflow-hidden">
-            {messagesLoading && (
-              <div className="flex items-center justify-center flex-1">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
 
-            {!messagesLoading && messagesError && (
-              <div className="flex items-center justify-center flex-1 px-4">
-                <p className="text-sm text-neutral-500 text-center">{messagesError}</p>
-              </div>
-            )}
+            {/* 메시지 목록 */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {messagesLoading && (
+                <div className="flex items-center justify-center flex-1">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
 
-            {!messagesLoading && !messagesError && discussionMessages.length === 0 && (
-              <div className="flex items-center justify-center flex-1 px-4">
-                <p className="text-sm text-neutral-500 text-center">아직 Discussion 메시지가 없습니다.</p>
-              </div>
-            )}
+              {!messagesLoading && messagesError && (
+                <div className="flex items-center justify-center flex-1 px-4">
+                  <p className="text-sm text-neutral-500 text-center">{messagesError}</p>
+                </div>
+              )}
 
-            {!messagesLoading && !messagesError && discussionMessages.length > 0 && (
-              <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-3">
-                {discussionMessages.map((dm) => (
-                  <div key={dm.discussionMessageId} className="flex flex-col gap-0.5">
-                    <span className="text-xs font-medium text-neutral-300">{dm.senderNickname}</span>
-                    <p className="text-sm text-neutral-200 break-words">{dm.content}</p>
-                    <span className="text-xs text-neutral-500">{formatMessageTime(dm.createdDate)}</span>
-                  </div>
-                ))}
+              {!messagesLoading && !messagesError && discussionMessages.length === 0 && (
+                <div className="flex items-center justify-center flex-1 px-4">
+                  <p className="text-sm text-neutral-500 text-center">아직 Discussion 메시지가 없습니다.</p>
+                </div>
+              )}
+
+              {!messagesLoading && !messagesError && discussionMessages.length > 0 && (
+                <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-3">
+                  {discussionMessages.map((dm) => (
+                    <div key={dm.discussionMessageId} className="flex flex-col gap-0.5">
+                      <span className="text-xs font-medium text-neutral-300">{dm.senderNickname}</span>
+                      <p className="text-sm text-neutral-200 break-words">{dm.content}</p>
+                      <span className="text-xs text-neutral-500">{formatMessageTime(dm.createdDate)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 입력창 */}
+            <div className="px-3 py-3 border-t border-neutral-700 flex-shrink-0">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={inputContent}
+                  onChange={(e) => setInputContent(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="메시지 입력..."
+                  className="flex-1 min-w-0 bg-neutral-800 text-sm text-white rounded-lg px-3 py-2 outline-none border border-neutral-700 focus:border-neutral-500"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputContent.trim()}
+                  className="flex-shrink-0 px-3 py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-neutral-700 disabled:cursor-not-allowed rounded-lg text-sm text-white transition-colors"
+                >
+                  전송
+                </button>
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>

@@ -46,6 +46,7 @@ export default function ChatPage() {
   const [oldestChatId, setOldestChatId] = useState(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [wsError, setWsError] = useState(null);
+  const [incomingDiscussionEvents, setIncomingDiscussionEvents] = useState([]);
 
   // refs — realtime 연동 (위치 유지)
   const selectedRoomIdRef = useRef(null);
@@ -143,6 +144,10 @@ export default function ChatPage() {
           break;
         }
 
+        case "DISCUSSION_MESSAGE_EVENT":
+          setIncomingDiscussionEvents((prev) => [...prev, data]);
+          break;
+
         case "ERROR":
           setWsError(data.message);
           break;
@@ -154,7 +159,17 @@ export default function ChatPage() {
     [selectedRoomId, refreshChatRooms]
   );
 
-  const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive } = useWebSocket(handleMessage);
+  // DiscussionPanel이 처리 완료한 이벤트를 queue에서 제거한다.
+  // 안 열린 discussion의 이벤트는 MVP에서 소비·폐기한다.
+  const consumeDiscussionEvents = useCallback((ids) => {
+    if (!ids.length) return;
+    const idSet = new Set(ids);
+    setIncomingDiscussionEvents((prev) =>
+      prev.filter((e) => !idSet.has(e.discussionMessageId))
+    );
+  }, []);
+
+  const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
 
   const { notifyEntered } = useRoomActivity({ selectedRoomId, connected, sendRoomActive, sendRoomInactive });
 
@@ -463,6 +478,7 @@ export default function ChatPage() {
               onOpenDiscussion={(msg) => {
                 setSelectedDiscussionMessage(msg);
                 setRightPanel("discussion");
+                setIncomingDiscussionEvents([]);
               }}
             />
           ) : (
@@ -483,9 +499,13 @@ export default function ChatPage() {
         {rightPanel === "discussion" && selectedDiscussionMessage && (
           <DiscussionPanel
             message={selectedDiscussionMessage}
+            incomingDiscussionEvents={incomingDiscussionEvents}
+            onConsumeDiscussionEvents={consumeDiscussionEvents}
+            sendDiscussionMessage={sendDiscussionMessage}
             onClose={() => {
               setRightPanel(null);
               setSelectedDiscussionMessage(null);
+              setIncomingDiscussionEvents([]);
             }}
           />
         )}
