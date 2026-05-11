@@ -13,6 +13,7 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
   const prevMessagesLengthRef = useRef(0);
   const prevScrollHeightRef = useRef(0);
   const isLoadingMoreRef = useRef(isLoadingMore);
+  const isComposingRef = useRef(false);
   const [text, setText] = useState("");
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -112,6 +113,7 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (isComposingRef.current || e.nativeEvent.isComposing) return;
       handleSend();
     }
   };
@@ -332,6 +334,8 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
               value={text}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
+              onCompositionStart={() => { isComposingRef.current = true; }}
+              onCompositionEnd={() => { isComposingRef.current = false; }}
               placeholder={connected ? "메시지를 입력하세요" : "연결 중..."}
               disabled={!connected}
               rows={1}

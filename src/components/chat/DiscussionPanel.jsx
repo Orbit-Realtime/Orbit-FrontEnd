@@ -19,6 +19,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   // 이미 append된 discussionMessageId를 추적해 중복 append를 방지한다.
   // 컴포넌트 마운트마다 초기화되므로 panel 재오픈 시 자동 리셋된다.
   const processedMessageIdsRef = useRef(new Set());
+  const isComposingRef = useRef(false);
 
   const loadDiscussion = useCallback(() => {
     setStatus("loading");
@@ -94,6 +95,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (isComposingRef.current || e.nativeEvent.isComposing) return;
       handleSendMessage();
     }
   };
@@ -226,6 +228,8 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
                   value={inputContent}
                   onChange={(e) => setInputContent(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onCompositionStart={() => { isComposingRef.current = true; }}
+                  onCompositionEnd={() => { isComposingRef.current = false; }}
                   placeholder="메시지 입력..."
                   className="flex-1 min-w-0 bg-neutral-800 text-sm text-white rounded-lg px-3 py-2 outline-none border border-neutral-700 focus:border-neutral-500"
                 />
