@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
 import { useWebSocket } from "../socket/useWebSocket";
 import { useRoomActivity } from "../socket/useRoomActivity";
 import { getChatRooms, leaveChatRoom, renameChatRoom } from "../api/chatRoomApi";
@@ -36,7 +37,13 @@ export default function ChatPage() {
   const [oldestChatId, setOldestChatId] = useState(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [wsError, setWsError] = useState(null);
-  const [incomingDiscussionEvents, setIncomingDiscussionEvents] = useState([]);
+
+  const {
+    incomingDiscussionEvents,
+    appendDiscussionEvent,
+    consumeDiscussionEvents,
+    clearDiscussionEvents,
+  } = useDiscussionQueue();
 
   // refs — realtime 연동 (위치 유지)
   const selectedRoomIdRef = useRef(null);
@@ -135,7 +142,7 @@ export default function ChatPage() {
         }
 
         case "DISCUSSION_MESSAGE_EVENT":
-          setIncomingDiscussionEvents((prev) => [...prev, data]);
+          appendDiscussionEvent(data);
           break;
 
         case "ERROR":
@@ -146,18 +153,8 @@ export default function ChatPage() {
           break;
       }
     },
-    [selectedRoomId, refreshChatRooms]
+    [selectedRoomId, refreshChatRooms, appendDiscussionEvent]
   );
-
-  // DiscussionPanel이 처리 완료한 이벤트를 queue에서 제거한다.
-  // 안 열린 discussion의 이벤트는 MVP에서 소비·폐기한다.
-  const consumeDiscussionEvents = useCallback((ids) => {
-    if (!ids.length) return;
-    const idSet = new Set(ids);
-    setIncomingDiscussionEvents((prev) =>
-      prev.filter((e) => !idSet.has(e.discussionMessageId))
-    );
-  }, []);
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
 
@@ -393,7 +390,7 @@ export default function ChatPage() {
               onToggleMembers={() => setPanelState((p) => (p?.type === "members" ? null : { type: "members" }))}
               onOpenDiscussion={(msg) => {
                 setPanelState({ type: "discussion", message: msg });
-                setIncomingDiscussionEvents([]);
+                clearDiscussionEvents();
               }}
             />
           ) : (
@@ -420,7 +417,7 @@ export default function ChatPage() {
             connected={connected}
             onClose={() => {
               setPanelState(null);
-              setIncomingDiscussionEvents([]);
+              clearDiscussionEvents();
             }}
           />
         )}
