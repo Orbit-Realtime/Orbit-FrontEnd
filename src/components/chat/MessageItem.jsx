@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { formatMessageTime } from "../../utils/formatTime";
 import MessageContentRenderer from "./MessageContentRenderer";
 
-export default function MessageItem({ message, isMine, hideNickname }) {
+function MessageItem({ message, isMine, hideNickname }) {
   const { senderNickname, message: text, unreadMemberCount, createdDate } = message;
 
   const timeStr = formatMessageTime(createdDate);
@@ -45,3 +46,5 @@ export default function MessageItem({ message, isMine, hideNickname }) {
     </div>
   );
 }
+
+export default memo(MessageItem);
