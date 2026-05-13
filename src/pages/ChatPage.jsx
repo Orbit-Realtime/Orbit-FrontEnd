@@ -229,8 +229,10 @@ export default function ChatPage() {
       // ENTER_ROOM 전송 후 useRoomActivity 내부 상태를 동기화한다.
       // ROOM_ACTIVE는 보내지 않는다 (ENTER_ROOM이 백엔드 activate를 처리함).
       notifyEntered(roomId);
+      const fetchId = ++historyFetchIdRef.current;
       getChatHistory(roomId)
         .then((result) => {
+          if (fetchId !== historyFetchIdRef.current) return;
           const { messages: msgs, lastReadChatId: lrcid, hasMore: more } = result.data;
           setMessages(msgs ?? []);
           setLastReadChatId(lrcid ?? null);
@@ -238,8 +240,14 @@ export default function ChatPage() {
           setOldestChatId(msgs?.[0]?.chatId ?? null);
           setHistoryError(false);
         })
-        .catch(() => setHistoryError(true))
-        .finally(() => setHistoryLoading(false));
+        .catch(() => {
+          if (fetchId !== historyFetchIdRef.current) return;
+          setHistoryError(true);
+        })
+        .finally(() => {
+          if (fetchId !== historyFetchIdRef.current) return;
+          setHistoryLoading(false);
+        });
     },
     [selectedRoomId, sendEnterRoom, notifyEntered]
   );
@@ -248,8 +256,10 @@ export default function ChatPage() {
   const handleLoadMore = useCallback(() => {
     if (!hasMore || isLoadingMore || !oldestChatId) return;
     setIsLoadingMore(true);
+    const fetchId = historyFetchIdRef.current;
     getChatHistory(selectedRoomId, oldestChatId)
       .then((result) => {
+        if (fetchId !== historyFetchIdRef.current) return;
         const { messages: older, hasMore: more } = result.data;
         setMessages((prev) => [...(older ?? []), ...prev]);
         setHasMore(more ?? false);
