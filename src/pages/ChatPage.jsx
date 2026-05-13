@@ -29,8 +29,8 @@ export default function ChatPage() {
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [editNickname, setEditNickname] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [rightPanel, setRightPanel] = useState(null); // null | "members" | "discussion"
-  const [selectedDiscussionMessage, setSelectedDiscussionMessage] = useState(null);
+  // null | { type: "members" } | { type: "discussion", message }
+  const [panelState, setPanelState] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const nicknameInputRef = useRef(null);
 
@@ -228,8 +228,7 @@ export default function ChatPage() {
   const handleSelectRoom = useCallback(
     (roomId) => {
       if (roomId === selectedRoomId) return;
-      setRightPanel(null);
-      setSelectedDiscussionMessage(null);
+      setPanelState(null);
       memberLastReadRef.current = {};
       setSelectedRoomId(roomId);
       setMessages([]);
@@ -288,8 +287,7 @@ export default function ChatPage() {
     try {
       await leaveChatRoom(roomId);
       setSelectedRoomId(null);
-      setRightPanel(null);
-      setSelectedDiscussionMessage(null);
+      setPanelState(null);
       setChatRooms((prev) => prev.filter((r) => r.chatRoomId !== roomId));
     } catch (e) {
       // ignore
@@ -473,11 +471,10 @@ export default function ChatPage() {
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}
-              membersOpen={rightPanel === "members"}
-              onToggleMembers={() => setRightPanel((p) => (p === "members" ? null : "members"))}
+              membersOpen={panelState?.type === "members"}
+              onToggleMembers={() => setPanelState((p) => (p?.type === "members" ? null : { type: "members" }))}
               onOpenDiscussion={(msg) => {
-                setSelectedDiscussionMessage(msg);
-                setRightPanel("discussion");
+                setPanelState({ type: "discussion", message: msg });
                 setIncomingDiscussionEvents([]);
               }}
             />
@@ -489,23 +486,22 @@ export default function ChatPage() {
         </div>
 
         {/* ── Right Panel — 멤버 목록 ── */}
-        {rightPanel === "members" && selectedRoomId && (
+        {panelState?.type === "members" && selectedRoomId && (
           <MemberPanel
             chatRoomId={selectedRoomId}
-            onClose={() => setRightPanel(null)}
+            onClose={() => setPanelState(null)}
           />
         )}
 
-        {rightPanel === "discussion" && selectedDiscussionMessage && (
+        {panelState?.type === "discussion" && (
           <DiscussionPanel
-            message={selectedDiscussionMessage}
+            message={panelState.message}
             incomingDiscussionEvents={incomingDiscussionEvents}
             onConsumeDiscussionEvents={consumeDiscussionEvents}
             sendDiscussionMessage={sendDiscussionMessage}
             connected={connected}
             onClose={() => {
-              setRightPanel(null);
-              setSelectedDiscussionMessage(null);
+              setPanelState(null);
               setIncomingDiscussionEvents([]);
             }}
           />
