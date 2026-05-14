@@ -4,7 +4,7 @@ import { useChatRooms } from "../hooks/useChatRooms";
 import { useWebSocket } from "../socket/useWebSocket";
 import { useRoomActivity } from "../socket/useRoomActivity";
 import { leaveChatRoom, renameChatRoom } from "../api/chatRoomApi";
-import { getChatHistory } from "../api/chatApi";
+import { getMessageHistory } from "../api/messageApi";
 import ChatRoomList from "../components/chat/ChatRoomList";
 import ChatWindow from "../components/chat/ChatWindow";
 import MemberPanel from "../components/chat/MemberPanel";
@@ -136,7 +136,7 @@ export default function ChatPage() {
           setHistoryLoading(true);
           setHistoryError(false);
           const fetchId = ++historyFetchIdRef.current;
-          getChatHistory(roomId)
+          getMessageHistory(roomId)
             .then((result) => {
               if (fetchId !== historyFetchIdRef.current) return;
               const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
@@ -180,7 +180,7 @@ export default function ChatPage() {
       // ROOM_ACTIVE는 보내지 않는다 (ENTER_ROOM이 백엔드 activate를 처리함).
       notifyEntered(roomId);
       const fetchId = ++historyFetchIdRef.current;
-      getChatHistory(roomId)
+      getMessageHistory(roomId)
         .then((result) => {
           if (fetchId !== historyFetchIdRef.current) return;
           const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
@@ -207,7 +207,7 @@ export default function ChatPage() {
     if (!hasMore || isLoadingMore || !oldestChatId) return;
     setIsLoadingMore(true);
     const fetchId = historyFetchIdRef.current;
-    getChatHistory(selectedRoomId, oldestChatId)
+    getMessageHistory(selectedRoomId, oldestChatId)
       .then((result) => {
         if (fetchId !== historyFetchIdRef.current) return;
         const { messages: older, hasMore: more } = result.data;
