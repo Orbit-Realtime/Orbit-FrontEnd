@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
-import { useChatRooms } from "../hooks/useChatRooms";
+import { useSpaces } from "../hooks/useSpaces";
 import { useWebSocket } from "../socket/useWebSocket";
 import { useRoomActivity } from "../socket/useRoomActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
@@ -21,8 +21,8 @@ export default function ChatPage() {
   // 데이터 상태 — realtime 연동 (위치 유지)
   const [selectedRoomId, setSelectedRoomId] = useState(null);
 
-  const { chatRooms, roomsError, selectedRoom, refreshChatRooms, applyRoomUpdate, removeRoom, patchRoom } =
-    useChatRooms(selectedRoomId);
+  const { spaces, spacesError, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
+    useSpaces(selectedRoomId);
   const [messages, setMessages] = useState([]);
   const [lastReadMessageId, setLastReadMessageId] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -57,7 +57,7 @@ export default function ChatPage() {
           break;
 
         case "UPDATE_CHAT_ROOM":
-          applyRoomUpdate(data);
+          applySpaceUpdate(data);
           break;
 
         case "READ_EVENT": {
@@ -103,7 +103,7 @@ export default function ChatPage() {
           break;
       }
     },
-    [selectedRoomId, applyRoomUpdate, appendDiscussionEvent]
+    [selectedRoomId, applySpaceUpdate, appendDiscussionEvent]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
@@ -124,7 +124,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (connected && !prevConnectedRef.current) {
       if (!isInitialConnectRef.current) {
-        refreshChatRooms();
+        refreshSpaces();
 
         const roomId = selectedRoomIdRef.current;
         if (roomId !== null) {
@@ -159,7 +159,7 @@ export default function ChatPage() {
       isInitialConnectRef.current = false;
     }
     prevConnectedRef.current = connected;
-  }, [connected, sendEnterRoom, notifyEntered, refreshChatRooms]);
+  }, [connected, sendEnterRoom, notifyEntered, refreshSpaces]);
 
   // 채팅방 선택
   const handleSelectRoom = useCallback(
@@ -235,29 +235,29 @@ export default function ChatPage() {
       await leaveSpace(roomId);
       setSelectedRoomId(null);
       setPanelState(null);
-      removeRoom(roomId);
+      removeSpace(roomId);
     } catch (e) {
       // ignore
     }
-  }, [selectedRoomId, removeRoom]);
+  }, [selectedRoomId, removeSpace]);
 
   // 채팅방 이름 변경
   const handleRenameRoom = useCallback(async (newTitle) => {
     if (!selectedRoomId || !newTitle.trim()) return;
     try {
       await renameSpace(selectedRoomId, newTitle.trim());
-      patchRoom(selectedRoomId, { title: newTitle.trim() });
+      patchSpace(selectedRoomId, { title: newTitle.trim() });
     } catch (e) {
       // ignore
     }
-  }, [selectedRoomId, patchRoom]);
+  }, [selectedRoomId, patchSpace]);
 
   // Space 생성 완료: modal 닫기 + 목록 갱신 + 생성된 Space 자동 선택
   const handleSpaceCreated = useCallback((roomId) => {
     setShowCreateModal(false);
-    refreshChatRooms();
+    refreshSpaces();
     if (roomId) handleSelectRoom(roomId);
-  }, [refreshChatRooms, handleSelectRoom]);
+  }, [refreshSpaces, handleSelectRoom]);
 
   return (
     <div className="relative flex flex-col h-screen bg-neutral-900 text-white overflow-hidden">
@@ -303,9 +303,9 @@ export default function ChatPage() {
           {/* Space 목록 */}
           <div className="flex-1 overflow-hidden">
             <ChatRoomList
-              chatRooms={chatRooms}
-              roomsError={roomsError}
-              onRetry={refreshChatRooms}
+              chatRooms={spaces}
+              roomsError={spacesError}
+              onRetry={refreshSpaces}
               selectedRoomId={selectedRoomId}
               onSelectRoom={handleSelectRoom}
             />
@@ -329,7 +329,7 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedRoomId ? (
             <ChatWindow
-              room={selectedRoom}
+              room={selectedSpace}
               messages={messages}
               lastReadMessageId={lastReadMessageId}
               onSend={handleSend}

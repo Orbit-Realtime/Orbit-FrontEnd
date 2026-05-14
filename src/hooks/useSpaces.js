@@ -9,37 +9,37 @@ const sortRooms = (rooms) =>
     return new Date(b.createdDate) - new Date(a.createdDate);
   });
 
-export function useChatRooms(selectedRoomId) {
-  const [chatRooms, setChatRooms] = useState([]);
-  const [roomsError, setRoomsError] = useState(false);
+export function useSpaces(selectedRoomId) {
+  const [spaces, setSpaces] = useState([]);
+  const [spacesError, setSpacesError] = useState(false);
 
   useEffect(() => {
     getSpaces()
       .then((result) => {
-        setChatRooms(sortRooms(result.data ?? []));
-        setRoomsError(false);
+        setSpaces(sortRooms(result.data ?? []));
+        setSpacesError(false);
       })
-      .catch(() => setRoomsError(true));
+      .catch(() => setSpacesError(true));
   }, []);
 
-  const refreshChatRooms = useCallback(() => {
+  const refreshSpaces = useCallback(() => {
     getSpaces()
       .then((result) => {
-        setChatRooms(sortRooms(result.data ?? []));
-        setRoomsError(false);
+        setSpaces(sortRooms(result.data ?? []));
+        setSpacesError(false);
       })
-      .catch(() => setRoomsError(true));
+      .catch(() => setSpacesError(true));
   }, []);
 
   // UPDATE_CHAT_ROOM WebSocket 이벤트 처리.
   // roomExists === false: 새로 초대된 방은 인라인 추가 대신 전체 재조회로 처리.
   // lastChatId 역전 시 stale 이벤트 무시.
-  const applyRoomUpdate = useCallback(
+  const applySpaceUpdate = useCallback(
     (data) => {
-      setChatRooms((prev) => {
+      setSpaces((prev) => {
         const roomExists = prev.some((r) => r.chatRoomId === data.chatRoomId);
         if (!roomExists) {
-          setTimeout(refreshChatRooms, 0);
+          setTimeout(refreshSpaces, 0);
           return prev;
         }
         return sortRooms(
@@ -64,31 +64,31 @@ export function useChatRooms(selectedRoomId) {
         );
       });
     },
-    [refreshChatRooms]
+    [refreshSpaces]
   );
 
-  const removeRoom = useCallback((roomId) => {
-    setChatRooms((prev) => prev.filter((r) => r.chatRoomId !== roomId));
+  const removeSpace = useCallback((roomId) => {
+    setSpaces((prev) => prev.filter((r) => r.chatRoomId !== roomId));
   }, []);
 
-  const patchRoom = useCallback((roomId, patch) => {
-    setChatRooms((prev) =>
+  const patchSpace = useCallback((roomId, patch) => {
+    setSpaces((prev) =>
       prev.map((r) => (r.chatRoomId === roomId ? { ...r, ...patch } : r))
     );
   }, []);
 
-  const selectedRoom = useMemo(
-    () => chatRooms.find((r) => r.chatRoomId === selectedRoomId),
-    [chatRooms, selectedRoomId]
+  const selectedSpace = useMemo(
+    () => spaces.find((r) => r.chatRoomId === selectedRoomId),
+    [spaces, selectedRoomId]
   );
 
   return {
-    chatRooms,
-    roomsError,
-    selectedRoom,
-    refreshChatRooms,
-    applyRoomUpdate,
-    removeRoom,
-    patchRoom,
+    spaces,
+    spacesError,
+    selectedSpace,
+    refreshSpaces,
+    applySpaceUpdate,
+    removeSpace,
+    patchSpace,
   };
 }
