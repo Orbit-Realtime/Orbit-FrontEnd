@@ -1,4 +1,4 @@
-import { formatRoomTime } from "../../utils/formatTime";
+import { formatSpaceTime } from "../../utils/formatTime";
 
 export default function SpaceItem({ space, isSelected, onClick }) {
   const { title, lastMessage, unreadMessageCount, createdDate } = space;
@@ -19,7 +19,7 @@ export default function SpaceItem({ space, isSelected, onClick }) {
         <div className="flex items-center justify-between gap-2">
           <span className="text-white font-medium truncate">{title}</span>
           <span className="text-neutral-500 text-xs flex-shrink-0">
-            {formatRoomTime(createdDate)}
+            {formatSpaceTime(createdDate)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">

@@ -9,7 +9,7 @@ export function formatDateDivider(dateStr) {
   return `${year}년 ${month}월 ${day}일 ${dayOfWeek}요일`;
 }
 
-export function formatRoomTime(dateStr) {
+export function formatSpaceTime(dateStr) {
   if (!dateStr) return "";
 
   const date = new Date(dateStr);

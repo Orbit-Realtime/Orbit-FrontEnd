@@ -56,11 +56,11 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
       }
     } else {
       // inactive가 되어야 하는데 현재 active로 표시된 방이 있을 때만 전송
-      const roomToDeactivate = activeSpaceIdRef.current;
-      if (roomToDeactivate !== null) {
+      const spaceToDeactivate = activeSpaceIdRef.current;
+      if (spaceToDeactivate !== null) {
         // ref를 먼저 null로 갱신한 뒤 전송 → 전송 후 focus가 와도 null 상태에서 ROOM_ACTIVE 전송
         activeSpaceIdRef.current = null;
-        sendRoomInactive(roomToDeactivate);
+        sendRoomInactive(spaceToDeactivate);
       }
     }
   }, [sendRoomActive, sendRoomInactive]);
@@ -92,11 +92,11 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
     if (!connected) return;
 
     if (selectedSpaceId === null) {
-      const roomToDeactivate = activeSpaceIdRef.current;
-      if (roomToDeactivate !== null) {
+      const spaceToDeactivate = activeSpaceIdRef.current;
+      if (spaceToDeactivate !== null) {
         // ref를 먼저 null로 갱신한 뒤 전송
         activeSpaceIdRef.current = null;
-        sendRoomInactive(roomToDeactivate);
+        sendRoomInactive(spaceToDeactivate);
       }
     }
   }, [selectedSpaceId, connected, sendRoomInactive]);
