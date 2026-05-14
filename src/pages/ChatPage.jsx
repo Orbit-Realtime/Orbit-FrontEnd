@@ -359,7 +359,7 @@ export default function ChatPage() {
         {/* ── Right Panel — 멤버 목록 ── */}
         {panelState?.type === "members" && selectedSpaceId && (
           <MemberPanel
-            chatRoomId={selectedSpaceId}
+            spaceId={selectedSpaceId}
             onClose={() => setPanelState(null)}
           />
         )}

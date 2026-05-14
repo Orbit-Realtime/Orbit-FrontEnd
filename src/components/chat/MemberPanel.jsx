@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getSpaceMembers, inviteMembers } from "../../api/spaceApi";
 import { getMembers } from "../../api/memberApi";
 
-export default function MemberPanel({ chatRoomId, onClose }) {
+export default function MemberPanel({ spaceId, onClose }) {
   const { auth } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,11 +14,11 @@ export default function MemberPanel({ chatRoomId, onClose }) {
 
   const loadMembers = useCallback(() => {
     setLoading(true);
-    getSpaceMembers(chatRoomId)
+    getSpaceMembers(spaceId)
       .then((r) => setMembers(r.data ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [chatRoomId]);
+  }, [spaceId]);
 
   useEffect(() => {
     loadMembers();
@@ -52,7 +52,7 @@ export default function MemberPanel({ chatRoomId, onClose }) {
     if (selectedIds.size === 0 || inviting) return;
     setInviting(true);
     try {
-      await inviteMembers(chatRoomId, [...selectedIds]);
+      await inviteMembers(spaceId, [...selectedIds]);
       setShowInvite(false);
       setSelectedIds(new Set());
       loadMembers();
