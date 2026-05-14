@@ -139,7 +139,7 @@ export default function ChatPage() {
           getChatHistory(roomId)
             .then((result) => {
               if (fetchId !== historyFetchIdRef.current) return;
-              const { messages: msgs, lastReadChatId: lrcid, hasMore: more } = result.data;
+              const { messages: msgs, lastReadMessageId: lrcid, hasMore: more } = result.data;
               setMessages(msgs ?? []);
               setLastReadChatId(lrcid ?? null);
               setHasMore(more ?? false);
@@ -183,7 +183,7 @@ export default function ChatPage() {
       getChatHistory(roomId)
         .then((result) => {
           if (fetchId !== historyFetchIdRef.current) return;
-          const { messages: msgs, lastReadChatId: lrcid, hasMore: more } = result.data;
+          const { messages: msgs, lastReadMessageId: lrcid, hasMore: more } = result.data;
           setMessages(msgs ?? []);
           setLastReadChatId(lrcid ?? null);
           setHasMore(more ?? false);
