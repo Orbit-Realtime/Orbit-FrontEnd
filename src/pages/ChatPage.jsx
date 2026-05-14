@@ -5,7 +5,7 @@ import { useWebSocket } from "../socket/useWebSocket";
 import { useRoomActivity } from "../socket/useRoomActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
-import ChatRoomList from "../components/chat/ChatRoomList";
+import SpaceList from "../components/chat/SpaceList";
 import ChatWindow from "../components/chat/ChatWindow";
 import MemberPanel from "../components/chat/MemberPanel";
 import DiscussionPanel from "../components/chat/DiscussionPanel";
@@ -302,12 +302,12 @@ export default function ChatPage() {
 
           {/* Space 목록 */}
           <div className="flex-1 overflow-hidden">
-            <ChatRoomList
-              chatRooms={spaces}
-              roomsError={spacesError}
+            <SpaceList
+              spaces={spaces}
+              spacesError={spacesError}
               onRetry={refreshSpaces}
-              selectedRoomId={selectedRoomId}
-              onSelectRoom={handleSelectRoom}
+              selectedSpaceId={selectedRoomId}
+              onSelectSpace={handleSelectRoom}
             />
           </div>
 

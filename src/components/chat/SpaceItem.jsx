@@ -1,6 +1,6 @@
 import { formatRoomTime } from "../../utils/formatTime";
 
-export default function ChatRoomItem({ room, isSelected, onClick }) {
+export default function SpaceItem({ room, isSelected, onClick }) {
   const { title, lastMessage, unreadMessageCount, createdDate } = room;
 
   return (
