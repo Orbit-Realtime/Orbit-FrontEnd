@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
+import { useChatRooms } from "../hooks/useChatRooms";
 import { useWebSocket } from "../socket/useWebSocket";
 import { useRoomActivity } from "../socket/useRoomActivity";
-import { getChatRooms, leaveChatRoom, renameChatRoom } from "../api/chatRoomApi";
+import { leaveChatRoom, renameChatRoom } from "../api/chatRoomApi";
 import { getChatHistory } from "../api/chatApi";
 import ChatRoomList from "../components/chat/ChatRoomList";
 import ChatWindow from "../components/chat/ChatWindow";
@@ -11,14 +12,6 @@ import DiscussionPanel from "../components/chat/DiscussionPanel";
 import CreateSpaceModal from "../components/chat/CreateSpaceModal";
 import UserHeader from "../components/chat/UserHeader";
 
-const sortRooms = (rooms) =>
-  [...rooms].sort((a, b) => {
-    if (!a.createdDate && !b.createdDate) return 0;
-    if (!a.createdDate) return 1;
-    if (!b.createdDate) return -1;
-    return new Date(b.createdDate) - new Date(a.createdDate);
-  });
-
 export default function ChatPage() {
   // UI 상태
   // null | { type: "members" } | { type: "discussion", message }
@@ -26,9 +19,10 @@ export default function ChatPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // 데이터 상태 — realtime 연동 (위치 유지)
-  const [chatRooms, setChatRooms] = useState([]);
-  const [roomsError, setRoomsError] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
+
+  const { chatRooms, roomsError, selectedRoom, refreshChatRooms, applyRoomUpdate, removeRoom, patchRoom } =
+    useChatRooms(selectedRoomId);
   const [messages, setMessages] = useState([]);
   const [lastReadChatId, setLastReadChatId] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -52,26 +46,6 @@ export default function ChatPage() {
   const historyFetchIdRef = useRef(0);
   const memberLastReadRef = useRef({});
 
-  // 채팅방 목록 초기 조회
-  useEffect(() => {
-    getChatRooms()
-      .then((result) => {
-        setChatRooms(sortRooms(result.data ?? []));
-        setRoomsError(false);
-      })
-      .catch(() => setRoomsError(true));
-  }, []);
-
-  // 채팅방 목록 갱신
-  const refreshChatRooms = useCallback(() => {
-    getChatRooms()
-      .then((result) => {
-        setChatRooms(sortRooms(result.data ?? []));
-        setRoomsError(false);
-      })
-      .catch(() => setRoomsError(true));
-  }, []);
-
   // WebSocket 수신 메시지 처리
   const handleMessage = useCallback(
     (data) => {
@@ -83,31 +57,7 @@ export default function ChatPage() {
           break;
 
         case "UPDATE_CHAT_ROOM":
-          setChatRooms((prev) => {
-            const roomExists = prev.some((r) => r.chatRoomId === data.chatRoomId);
-            if (!roomExists) {
-              setTimeout(refreshChatRooms, 0);
-              return prev;
-            }
-            return sortRooms(prev.map((room) => {
-              if (room.chatRoomId !== data.chatRoomId) return room;
-              if (
-                data.lastChatId != null &&
-                room.lastChatId != null &&
-                data.lastChatId < room.lastChatId
-              ) {
-                return room;
-              }
-              return {
-                ...room,
-                title: data.title ?? room.title,
-                lastMessage: data.lastMessage,
-                createdDate: data.createdDate,
-                lastChatId: data.lastChatId,
-                unreadMessageCount: data.unreadMessageCount,
-              };
-            }));
-          });
+          applyRoomUpdate(data);
           break;
 
         case "READ_EVENT": {
@@ -153,7 +103,7 @@ export default function ChatPage() {
           break;
       }
     },
-    [selectedRoomId, refreshChatRooms, appendDiscussionEvent]
+    [selectedRoomId, applyRoomUpdate, appendDiscussionEvent]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
@@ -285,7 +235,7 @@ export default function ChatPage() {
       await leaveChatRoom(roomId);
       setSelectedRoomId(null);
       setPanelState(null);
-      setChatRooms((prev) => prev.filter((r) => r.chatRoomId !== roomId));
+      removeRoom(roomId);
     } catch (e) {
       // ignore
     }
@@ -296,11 +246,7 @@ export default function ChatPage() {
     if (!selectedRoomId || !newTitle.trim()) return;
     try {
       await renameChatRoom(selectedRoomId, newTitle.trim());
-      setChatRooms((prev) =>
-        prev.map((r) =>
-          r.chatRoomId === selectedRoomId ? { ...r, title: newTitle.trim() } : r
-        )
-      );
+      patchRoom(selectedRoomId, { title: newTitle.trim() });
     } catch (e) {
       // ignore
     }
@@ -383,7 +329,7 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedRoomId ? (
             <ChatWindow
-              room={chatRooms.find((r) => r.chatRoomId === selectedRoomId)}
+              room={selectedRoom}
               messages={messages}
               lastReadChatId={lastReadChatId}
               onSend={handleSend}
