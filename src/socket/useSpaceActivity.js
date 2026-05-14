@@ -7,10 +7,10 @@ import { useEffect, useRef, useCallback } from "react";
  * - ROOM_ACTIVE  : window focus + document visible 복구 시에만 전송
  * - ROOM_INACTIVE: window blur / document hidden / 방 선택 해제 시 전송
  *
- * 핵심 원칙: activeRoomIdRef는 전송 결정과 동시에(전송 호출 이전에) 갱신한다.
+ * 핵심 원칙: activeSpaceIdRef는 전송 결정과 동시에(전송 호출 이전에) 갱신한다.
  * 이렇게 해야 어떤 코드가 ref를 읽더라도 전송 의도와 일치하는 상태를 본다.
  */
-export function useRoomActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive }) {
+export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive }) {
   // document가 현재 보이는 상태인지 (다른 탭으로 이동하면 false)
   const isDocumentVisibleRef = useRef(!document.hidden);
   // window가 현재 포커스된 상태인지 (Alt+Tab 등으로 앱 전환하면 false)
@@ -20,7 +20,7 @@ export function useRoomActivity({ selectedSpaceId, connected, sendRoomActive, se
   // ROOM_ACTIVE 전송 결정 직전에 roomId로 설정.
   // ROOM_INACTIVE 전송 결정 직전에 null로 설정.
   // 이 ref가 null이면 focus/visible 복구 시 ROOM_ACTIVE를 전송한다.
-  const activeRoomIdRef = useRef(null);
+  const activeSpaceIdRef = useRef(null);
 
   // useCallback 내부에서 최신값 참조용 ref
   const selectedSpaceIdRef = useRef(selectedSpaceId);
@@ -49,17 +49,17 @@ export function useRoomActivity({ selectedSpaceId, connected, sendRoomActive, se
 
     if (shouldBeActive) {
       // active가 되어야 하는데 아직 이 방이 active가 아닐 때만 전송
-      if (activeRoomIdRef.current !== roomId) {
+      if (activeSpaceIdRef.current !== roomId) {
         // ref를 먼저 갱신한 뒤 전송 → 전송 후 읽는 코드도 일관된 상태 확인
-        activeRoomIdRef.current = roomId;
+        activeSpaceIdRef.current = roomId;
         sendRoomActive(roomId);
       }
     } else {
       // inactive가 되어야 하는데 현재 active로 표시된 방이 있을 때만 전송
-      const roomToDeactivate = activeRoomIdRef.current;
+      const roomToDeactivate = activeSpaceIdRef.current;
       if (roomToDeactivate !== null) {
         // ref를 먼저 null로 갱신한 뒤 전송 → 전송 후 focus가 와도 null 상태에서 ROOM_ACTIVE 전송
-        activeRoomIdRef.current = null;
+        activeSpaceIdRef.current = null;
         sendRoomInactive(roomToDeactivate);
       }
     }
@@ -77,11 +77,11 @@ export function useRoomActivity({ selectedSpaceId, connected, sendRoomActive, se
     if (!connectedRef.current) return;
 
     // ENTER_ROOM이 백엔드 activate를 처리했으므로 ref를 먼저 roomId로 갱신
-    activeRoomIdRef.current = roomId;
+    activeSpaceIdRef.current = roomId;
 
     // 창이 blur/hidden 상태라면 즉시 ref를 null로 되돌린 뒤 ROOM_INACTIVE 전송
     if (!isDocumentVisibleRef.current || !isWindowFocusedRef.current) {
-      activeRoomIdRef.current = null;
+      activeSpaceIdRef.current = null;
       sendRoomInactive(roomId);
     }
   }, [sendRoomInactive]);
@@ -92,10 +92,10 @@ export function useRoomActivity({ selectedSpaceId, connected, sendRoomActive, se
     if (!connected) return;
 
     if (selectedSpaceId === null) {
-      const roomToDeactivate = activeRoomIdRef.current;
+      const roomToDeactivate = activeSpaceIdRef.current;
       if (roomToDeactivate !== null) {
         // ref를 먼저 null로 갱신한 뒤 전송
-        activeRoomIdRef.current = null;
+        activeSpaceIdRef.current = null;
         sendRoomInactive(roomToDeactivate);
       }
     }
@@ -105,7 +105,7 @@ export function useRoomActivity({ selectedSpaceId, connected, sendRoomActive, se
   // 재연결 후 ENTER_ROOM 재전송은 ChatPage의 reconnect useEffect가 담당한다.
   useEffect(() => {
     if (!connected) {
-      activeRoomIdRef.current = null;
+      activeSpaceIdRef.current = null;
     }
   }, [connected]);
 

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
 import { useSpaces } from "../hooks/useSpaces";
 import { useWebSocket } from "../socket/useWebSocket";
-import { useRoomActivity } from "../socket/useRoomActivity";
+import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
 import SpaceList from "../components/chat/SpaceList";
@@ -108,7 +108,7 @@ export default function ChatPage() {
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
 
-  const { notifyEntered } = useRoomActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive });
+  const { notifyEntered } = useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive });
 
   // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
@@ -176,7 +176,7 @@ export default function ChatPage() {
       setHistoryLoading(true);
       setHistoryError(false);
       sendEnterRoom(roomId);
-      // ENTER_ROOM 전송 후 useRoomActivity 내부 상태를 동기화한다.
+      // ENTER_ROOM 전송 후 useSpaceActivity 내부 상태를 동기화한다.
       // ROOM_ACTIVE는 보내지 않는다 (ENTER_ROOM이 백엔드 activate를 처리함).
       notifyEntered(roomId);
       const fetchId = ++historyFetchIdRef.current;
