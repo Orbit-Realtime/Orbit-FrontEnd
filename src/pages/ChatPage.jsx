@@ -6,7 +6,7 @@ import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
 import SpaceList from "../components/chat/SpaceList";
-import ChatWindow from "../components/chat/ChatWindow";
+import SpaceWindow from "../components/chat/SpaceWindow";
 import MemberPanel from "../components/chat/MemberPanel";
 import DiscussionPanel from "../components/chat/DiscussionPanel";
 import CreateSpaceModal from "../components/chat/CreateSpaceModal";
@@ -328,7 +328,7 @@ export default function ChatPage() {
         {/* ── Main Conversation ── */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedSpaceId ? (
-            <ChatWindow
+            <SpaceWindow
               space={selectedSpace}
               messages={messages}
               lastReadMessageId={lastReadMessageId}

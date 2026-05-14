@@ -4,7 +4,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function ChatWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, membersOpen, onToggleMembers, onOpenDiscussion }) {
+export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, membersOpen, onToggleMembers, onOpenDiscussion }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
