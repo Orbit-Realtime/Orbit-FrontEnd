@@ -329,7 +329,7 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedSpaceId ? (
             <ChatWindow
-              room={selectedSpace}
+              space={selectedSpace}
               messages={messages}
               lastReadMessageId={lastReadMessageId}
               onSend={handleSend}

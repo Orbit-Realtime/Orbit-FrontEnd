@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getSpaces } from "../api/spaceApi";
 
-const sortRooms = (rooms) =>
-  [...rooms].sort((a, b) => {
+const sortRooms = (spaces) =>
+  [...spaces].sort((a, b) => {
     if (!a.createdDate && !b.createdDate) return 0;
     if (!a.createdDate) return 1;
     if (!b.createdDate) return -1;
@@ -32,29 +32,29 @@ export function useSpaces(selectedSpaceId) {
   }, []);
 
   // UPDATE_CHAT_ROOM WebSocket 이벤트 처리.
-  // roomExists === false: 새로 초대된 방은 인라인 추가 대신 전체 재조회로 처리.
+  // spaceExists === false: 새로 초대된 방은 인라인 추가 대신 전체 재조회로 처리.
   // lastChatId 역전 시 stale 이벤트 무시.
   const applySpaceUpdate = useCallback(
     (data) => {
       setSpaces((prev) => {
-        const roomExists = prev.some((r) => r.chatRoomId === data.chatRoomId);
-        if (!roomExists) {
+        const spaceExists = prev.some((r) => r.chatRoomId === data.chatRoomId);
+        if (!spaceExists) {
           setTimeout(refreshSpaces, 0);
           return prev;
         }
         return sortRooms(
-          prev.map((room) => {
-            if (room.chatRoomId !== data.chatRoomId) return room;
+          prev.map((space) => {
+            if (space.chatRoomId !== data.chatRoomId) return space;
             if (
               data.lastChatId != null &&
-              room.lastChatId != null &&
-              data.lastChatId < room.lastChatId
+              space.lastChatId != null &&
+              data.lastChatId < space.lastChatId
             ) {
-              return room;
+              return space;
             }
             return {
-              ...room,
-              title: data.title ?? room.title,
+              ...space,
+              title: data.title ?? space.title,
               lastMessage: data.lastMessage,
               createdDate: data.createdDate,
               lastChatId: data.lastChatId,
@@ -67,13 +67,13 @@ export function useSpaces(selectedSpaceId) {
     [refreshSpaces]
   );
 
-  const removeSpace = useCallback((roomId) => {
-    setSpaces((prev) => prev.filter((r) => r.chatRoomId !== roomId));
+  const removeSpace = useCallback((spaceId) => {
+    setSpaces((prev) => prev.filter((r) => r.chatRoomId !== spaceId));
   }, []);
 
-  const patchSpace = useCallback((roomId, patch) => {
+  const patchSpace = useCallback((spaceId, patch) => {
     setSpaces((prev) =>
-      prev.map((r) => (r.chatRoomId === roomId ? { ...r, ...patch } : r))
+      prev.map((r) => (r.chatRoomId === spaceId ? { ...r, ...patch } : r))
     );
   }, []);
 

@@ -4,7 +4,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function ChatWindow({ room, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, membersOpen, onToggleMembers, onOpenDiscussion }) {
+export default function ChatWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, membersOpen, onToggleMembers, onOpenDiscussion }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -26,7 +26,7 @@ export default function ChatWindow({ room, messages, lastReadMessageId, onSend, 
   useEffect(() => {
     setIsEditingTitle(false);
     setLeaveConfirm(false);
-  }, [room?.chatRoomId]);
+  }, [space?.chatRoomId]);
 
   const handleSend = () => {
     const trimmed = text.trim();
@@ -54,13 +54,13 @@ export default function ChatWindow({ room, messages, lastReadMessageId, onSend, 
   };
 
   const startEditTitle = () => {
-    setEditTitle(room?.title ?? "");
+    setEditTitle(space?.title ?? "");
     setIsEditingTitle(true);
   };
 
   const commitRename = () => {
     setIsEditingTitle(false);
-    if (editTitle.trim() && editTitle.trim() !== room?.title) {
+    if (editTitle.trim() && editTitle.trim() !== space?.title) {
       onRename(editTitle.trim());
     }
   };
@@ -126,7 +126,7 @@ export default function ChatWindow({ room, messages, lastReadMessageId, onSend, 
               className="flex-1 text-left font-bold text-white hover:text-neutral-300 transition-colors truncate"
               title="클릭하여 이름 변경"
             >
-              {room?.title ?? ""}
+              {space?.title ?? ""}
             </button>
           )}
 

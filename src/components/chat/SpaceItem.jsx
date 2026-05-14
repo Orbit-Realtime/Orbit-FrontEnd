@@ -1,7 +1,7 @@
 import { formatRoomTime } from "../../utils/formatTime";
 
-export default function SpaceItem({ room, isSelected, onClick }) {
-  const { title, lastMessage, unreadMessageCount, createdDate } = room;
+export default function SpaceItem({ space, isSelected, onClick }) {
+  const { title, lastMessage, unreadMessageCount, createdDate } = space;
 
   return (
     <div

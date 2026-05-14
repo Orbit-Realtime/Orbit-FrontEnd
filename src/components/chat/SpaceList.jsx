@@ -25,12 +25,12 @@ export default function SpaceList({ spaces, spacesError, onRetry, selectedSpaceI
 
   return (
     <div className="flex flex-col overflow-y-auto">
-      {spaces.map((room) => (
+      {spaces.map((space) => (
         <SpaceItem
-          key={room.chatRoomId}
-          room={room}
-          isSelected={room.chatRoomId === selectedSpaceId}
-          onClick={() => onSelectSpace(room.chatRoomId)}
+          key={space.chatRoomId}
+          space={space}
+          isSelected={space.chatRoomId === selectedSpaceId}
+          onClick={() => onSelectSpace(space.chatRoomId)}
         />
       ))}
     </div>
