@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getSpaces } from "../api/spaceApi";
 
-const sortRooms = (spaces) =>
+const sortSpaces = (spaces) =>
   [...spaces].sort((a, b) => {
     if (!a.createdDate && !b.createdDate) return 0;
     if (!a.createdDate) return 1;
@@ -16,7 +16,7 @@ export function useSpaces(selectedSpaceId) {
   useEffect(() => {
     getSpaces()
       .then((result) => {
-        setSpaces(sortRooms(result.data ?? []));
+        setSpaces(sortSpaces(result.data ?? []));
         setSpacesError(false);
       })
       .catch(() => setSpacesError(true));
@@ -25,7 +25,7 @@ export function useSpaces(selectedSpaceId) {
   const refreshSpaces = useCallback(() => {
     getSpaces()
       .then((result) => {
-        setSpaces(sortRooms(result.data ?? []));
+        setSpaces(sortSpaces(result.data ?? []));
         setSpacesError(false);
       })
       .catch(() => setSpacesError(true));
@@ -42,7 +42,7 @@ export function useSpaces(selectedSpaceId) {
           setTimeout(refreshSpaces, 0);
           return prev;
         }
-        return sortRooms(
+        return sortSpaces(
           prev.map((space) => {
             if (space.chatRoomId !== data.chatRoomId) return space;
             if (
