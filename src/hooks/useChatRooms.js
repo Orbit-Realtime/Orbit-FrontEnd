@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { getChatRooms } from "../api/chatRoomApi";
+import { getSpaces } from "../api/spaceApi";
 
 const sortRooms = (rooms) =>
   [...rooms].sort((a, b) => {
@@ -14,7 +14,7 @@ export function useChatRooms(selectedRoomId) {
   const [roomsError, setRoomsError] = useState(false);
 
   useEffect(() => {
-    getChatRooms()
+    getSpaces()
       .then((result) => {
         setChatRooms(sortRooms(result.data ?? []));
         setRoomsError(false);
@@ -23,7 +23,7 @@ export function useChatRooms(selectedRoomId) {
   }, []);
 
   const refreshChatRooms = useCallback(() => {
-    getChatRooms()
+    getSpaces()
       .then((result) => {
         setChatRooms(sortRooms(result.data ?? []));
         setRoomsError(false);

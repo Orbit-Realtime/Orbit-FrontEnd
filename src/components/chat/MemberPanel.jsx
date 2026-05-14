@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getChatRoomMembers, inviteMembers } from "../../api/chatRoomApi";
+import { getSpaceMembers, inviteMembers } from "../../api/spaceApi";
 import { getMembers } from "../../api/memberApi";
 
 export default function MemberPanel({ chatRoomId, onClose }) {
@@ -14,7 +14,7 @@ export default function MemberPanel({ chatRoomId, onClose }) {
 
   const loadMembers = useCallback(() => {
     setLoading(true);
-    getChatRoomMembers(chatRoomId)
+    getSpaceMembers(chatRoomId)
       .then((r) => setMembers(r.data ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));

@@ -3,7 +3,7 @@ import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
 import { useChatRooms } from "../hooks/useChatRooms";
 import { useWebSocket } from "../socket/useWebSocket";
 import { useRoomActivity } from "../socket/useRoomActivity";
-import { leaveChatRoom, renameChatRoom } from "../api/chatRoomApi";
+import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
 import ChatRoomList from "../components/chat/ChatRoomList";
 import ChatWindow from "../components/chat/ChatWindow";
@@ -232,7 +232,7 @@ export default function ChatPage() {
     if (!selectedRoomId) return;
     const roomId = selectedRoomId;
     try {
-      await leaveChatRoom(roomId);
+      await leaveSpace(roomId);
       setSelectedRoomId(null);
       setPanelState(null);
       removeRoom(roomId);
@@ -245,7 +245,7 @@ export default function ChatPage() {
   const handleRenameRoom = useCallback(async (newTitle) => {
     if (!selectedRoomId || !newTitle.trim()) return;
     try {
-      await renameChatRoom(selectedRoomId, newTitle.trim());
+      await renameSpace(selectedRoomId, newTitle.trim());
       patchRoom(selectedRoomId, { title: newTitle.trim() });
     } catch (e) {
       // ignore

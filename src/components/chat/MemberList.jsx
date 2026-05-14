@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getMembers } from "../../api/memberApi";
-import { createChatRoom } from "../../api/chatRoomApi";
+import { createSpace } from "../../api/spaceApi";
 
 export default function MemberList({ onRoomCreated }) {
   const { auth } = useAuth();
@@ -44,7 +44,7 @@ export default function MemberList({ onRoomCreated }) {
         .filter((m) => selectedIds.has(m.memberId))
         .map((m) => m.nickname)
         .join(", ");
-      await createChatRoom(receiverIds, title);
+      await createSpace(receiverIds, title);
       setSelectedIds(new Set());
       onRoomCreated();
     } catch (e) {

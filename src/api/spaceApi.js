@@ -1,18 +1,18 @@
 import axiosInstance from "./axios";
 
-export const createChatRoom = (receiverIds, title) =>
+export const createSpace = (receiverIds, title) =>
   axiosInstance.post("/api/chat/room", { receiverIds, title });
 
-export const getChatRooms = () =>
+export const getSpaces = () =>
   axiosInstance.get("/api/chat/rooms");
 
-export const leaveChatRoom = (chatRoomId) =>
+export const leaveSpace = (chatRoomId) =>
   axiosInstance.delete(`/api/chat/room/${chatRoomId}`);
 
-export const renameChatRoom = (chatRoomId, title) =>
+export const renameSpace = (chatRoomId, title) =>
   axiosInstance.patch(`/api/chat/room/${chatRoomId}`, { title });
 
-export const getChatRoomMembers = (chatRoomId) =>
+export const getSpaceMembers = (chatRoomId) =>
   axiosInstance.get(`/api/chat/room/${chatRoomId}/members`);
 
 export const inviteMembers = (chatRoomId, memberIds) =>

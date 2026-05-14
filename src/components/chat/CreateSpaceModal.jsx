@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getMembers } from "../../api/memberApi";
-import { createChatRoom } from "../../api/chatRoomApi";
+import { createSpace } from "../../api/spaceApi";
 
 export default function CreateSpaceModal({ onCreated, onClose }) {
   const { auth } = useAuth();
@@ -54,7 +54,7 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
           .filter((m) => selectedIds.has(m.memberId))
           .map((m) => m.nickname)
           .join(", ");
-      const result = await createChatRoom(receiverIds, effectiveTitle);
+      const result = await createSpace(receiverIds, effectiveTitle);
       const createdRoomId = result?.data?.chatRoomId ?? null;
       onCreated(createdRoomId);
     } catch (e) {
