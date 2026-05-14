@@ -126,17 +126,17 @@ export default function ChatPage() {
       if (!isInitialConnectRef.current) {
         refreshSpaces();
 
-        const roomId = selectedSpaceIdRef.current;
-        if (roomId !== null) {
-          sendEnterRoom(roomId);
-          notifyEntered(roomId);
+        const spaceId = selectedSpaceIdRef.current;
+        if (spaceId !== null) {
+          sendEnterRoom(spaceId);
+          notifyEntered(spaceId);
 
           memberLastReadRef.current = {};
           setMessages([]);
           setHistoryLoading(true);
           setHistoryError(false);
           const fetchId = ++historyFetchIdRef.current;
-          getMessageHistory(roomId)
+          getMessageHistory(spaceId)
             .then((result) => {
               if (fetchId !== historyFetchIdRef.current) return;
               const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
@@ -163,11 +163,11 @@ export default function ChatPage() {
 
   // 채팅방 선택
   const handleSelectSpace = useCallback(
-    (roomId) => {
-      if (roomId === selectedSpaceId) return;
+    (spaceId) => {
+      if (spaceId === selectedSpaceId) return;
       setPanelState(null);
       memberLastReadRef.current = {};
-      setSelectedSpaceId(roomId);
+      setSelectedSpaceId(spaceId);
       setMessages([]);
       setLastReadMessageId(null);
       setHasMore(false);
@@ -175,12 +175,12 @@ export default function ChatPage() {
       setIsLoadingMore(false);
       setHistoryLoading(true);
       setHistoryError(false);
-      sendEnterRoom(roomId);
+      sendEnterRoom(spaceId);
       // ENTER_ROOM 전송 후 useSpaceActivity 내부 상태를 동기화한다.
       // ROOM_ACTIVE는 보내지 않는다 (ENTER_ROOM이 백엔드 activate를 처리함).
-      notifyEntered(roomId);
+      notifyEntered(spaceId);
       const fetchId = ++historyFetchIdRef.current;
-      getMessageHistory(roomId)
+      getMessageHistory(spaceId)
         .then((result) => {
           if (fetchId !== historyFetchIdRef.current) return;
           const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
@@ -230,12 +230,12 @@ export default function ChatPage() {
   // 채팅방 나가기
   const handleLeaveRoom = useCallback(async () => {
     if (!selectedSpaceId) return;
-    const roomId = selectedSpaceId;
+    const spaceId = selectedSpaceId;
     try {
-      await leaveSpace(roomId);
+      await leaveSpace(spaceId);
       setSelectedSpaceId(null);
       setPanelState(null);
-      removeSpace(roomId);
+      removeSpace(spaceId);
     } catch (e) {
       // ignore
     }
@@ -253,10 +253,10 @@ export default function ChatPage() {
   }, [selectedSpaceId, patchSpace]);
 
   // Space 생성 완료: modal 닫기 + 목록 갱신 + 생성된 Space 자동 선택
-  const handleSpaceCreated = useCallback((roomId) => {
+  const handleSpaceCreated = useCallback((spaceId) => {
     setShowCreateModal(false);
     refreshSpaces();
-    if (roomId) handleSelectSpace(roomId);
+    if (spaceId) handleSelectSpace(spaceId);
   }, [refreshSpaces, handleSelectSpace]);
 
   return (

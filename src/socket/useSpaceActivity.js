@@ -17,7 +17,7 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
   const isWindowFocusedRef = useRef(document.hasFocus());
 
   // FE가 "방이 active 상태"라고 판단하는 기준 ref.
-  // ROOM_ACTIVE 전송 결정 직전에 roomId로 설정.
+  // ROOM_ACTIVE 전송 결정 직전에 spaceId로 설정.
   // ROOM_INACTIVE 전송 결정 직전에 null로 설정.
   // 이 ref가 null이면 focus/visible 복구 시 ROOM_ACTIVE를 전송한다.
   const activeSpaceIdRef = useRef(null);
@@ -38,21 +38,21 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
    * → 어떤 코드가 전송 직후 ref를 읽어도 이미 올바른 상태다.
    */
   const evaluateAndSync = useCallback(() => {
-    const roomId = selectedSpaceIdRef.current;
+    const spaceId = selectedSpaceIdRef.current;
 
     // active 조건: 연결됨 AND 방 선택됨 AND 문서 보임 AND 창 포커스됨
     const shouldBeActive =
       connectedRef.current &&
-      roomId !== null &&
+      spaceId !== null &&
       isDocumentVisibleRef.current &&
       isWindowFocusedRef.current;
 
     if (shouldBeActive) {
       // active가 되어야 하는데 아직 이 방이 active가 아닐 때만 전송
-      if (activeSpaceIdRef.current !== roomId) {
+      if (activeSpaceIdRef.current !== spaceId) {
         // ref를 먼저 갱신한 뒤 전송 → 전송 후 읽는 코드도 일관된 상태 확인
-        activeSpaceIdRef.current = roomId;
-        sendRoomActive(roomId);
+        activeSpaceIdRef.current = spaceId;
+        sendRoomActive(spaceId);
       }
     } else {
       // inactive가 되어야 하는데 현재 active로 표시된 방이 있을 때만 전송
@@ -69,25 +69,25 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
    * ENTER_ROOM을 전송한 직후 ChatPage에서 반드시 호출한다.
    *
    * ENTER_ROOM이 백엔드에서 해당 방을 자동으로 activate하므로,
-   * 여기서는 ROOM_ACTIVE를 보내지 않고 ref를 먼저 roomId로 갱신한다.
+   * 여기서는 ROOM_ACTIVE를 보내지 않고 ref를 먼저 spaceId로 갱신한다.
    * 창이 blur/hidden 상태라면 ref를 null로 되돌리고 ROOM_INACTIVE를 전송한다.
    */
-  const notifyEntered = useCallback((roomId) => {
+  const notifyEntered = useCallback((spaceId) => {
     // 미연결 상태에서는 동기화 불필요 (재연결 후 ENTER_ROOM이 다시 전송됨)
     if (!connectedRef.current) return;
 
-    // ENTER_ROOM이 백엔드 activate를 처리했으므로 ref를 먼저 roomId로 갱신
-    activeSpaceIdRef.current = roomId;
+    // ENTER_ROOM이 백엔드 activate를 처리했으므로 ref를 먼저 spaceId로 갱신
+    activeSpaceIdRef.current = spaceId;
 
     // 창이 blur/hidden 상태라면 즉시 ref를 null로 되돌린 뒤 ROOM_INACTIVE 전송
     if (!isDocumentVisibleRef.current || !isWindowFocusedRef.current) {
       activeSpaceIdRef.current = null;
-      sendRoomInactive(roomId);
+      sendRoomInactive(spaceId);
     }
   }, [sendRoomInactive]);
 
   // selectedSpaceId가 null이 되면 ROOM_INACTIVE 전송 후 ref null로 초기화
-  // null → roomId 전환(방 선택/전환)은 notifyEntered에서 처리한다.
+  // null → spaceId 전환(방 선택/전환)은 notifyEntered에서 처리한다.
   useEffect(() => {
     if (!connected) return;
 
