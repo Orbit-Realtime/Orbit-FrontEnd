@@ -24,7 +24,7 @@ export default function ChatPage() {
   const { chatRooms, roomsError, selectedRoom, refreshChatRooms, applyRoomUpdate, removeRoom, patchRoom } =
     useChatRooms(selectedRoomId);
   const [messages, setMessages] = useState([]);
-  const [lastReadChatId, setLastReadChatId] = useState(null);
+  const [lastReadMessageId, setLastReadMessageId] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -139,9 +139,9 @@ export default function ChatPage() {
           getChatHistory(roomId)
             .then((result) => {
               if (fetchId !== historyFetchIdRef.current) return;
-              const { messages: msgs, lastReadMessageId: lrcid, hasMore: more } = result.data;
+              const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
               setMessages(msgs ?? []);
-              setLastReadChatId(lrcid ?? null);
+              setLastReadMessageId(lastReadMessageId ?? null);
               setHasMore(more ?? false);
               setOldestChatId(msgs?.[0]?.chatId ?? null);
               setHistoryError(false);
@@ -169,7 +169,7 @@ export default function ChatPage() {
       memberLastReadRef.current = {};
       setSelectedRoomId(roomId);
       setMessages([]);
-      setLastReadChatId(null);
+      setLastReadMessageId(null);
       setHasMore(false);
       setOldestChatId(null);
       setIsLoadingMore(false);
@@ -183,9 +183,9 @@ export default function ChatPage() {
       getChatHistory(roomId)
         .then((result) => {
           if (fetchId !== historyFetchIdRef.current) return;
-          const { messages: msgs, lastReadMessageId: lrcid, hasMore: more } = result.data;
+          const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
           setMessages(msgs ?? []);
-          setLastReadChatId(lrcid ?? null);
+          setLastReadMessageId(lastReadMessageId ?? null);
           setHasMore(more ?? false);
           setOldestChatId(msgs?.[0]?.chatId ?? null);
           setHistoryError(false);
@@ -331,7 +331,7 @@ export default function ChatPage() {
             <ChatWindow
               room={selectedRoom}
               messages={messages}
-              lastReadChatId={lastReadChatId}
+              lastReadMessageId={lastReadMessageId}
               onSend={handleSend}
               loading={historyLoading}
               historyError={historyError}

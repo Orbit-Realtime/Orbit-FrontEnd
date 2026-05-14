@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 export default function useScrollBehavior({
   messages,
   loading,
-  lastReadChatId,
+  lastReadMessageId,
   isLoadingMore,
   hasMore,
   onLoadMore,
@@ -55,7 +55,7 @@ export default function useScrollBehavior({
     if (!scrolledRef.current) {
       scrolledRef.current = true;
       prevMessagesLengthRef.current = messages.length;
-      if (lastReadChatId !== null && readMarkerRef.current) {
+      if (lastReadMessageId !== null && readMarkerRef.current) {
         readMarkerRef.current.scrollIntoView({ behavior: "instant" });
       } else {
         bottomRef.current?.scrollIntoView({ behavior: "instant" });
@@ -71,7 +71,7 @@ export default function useScrollBehavior({
         }
       }
     }
-  }, [loading, messages, lastReadChatId]);
+  }, [loading, messages, lastReadMessageId]);
 
   // isLoadingMore prop을 ref에 동기화 (다른 effect 내부에서 최신값 참조용)
   useEffect(() => {

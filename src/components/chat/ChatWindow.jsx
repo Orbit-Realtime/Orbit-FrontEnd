@@ -4,7 +4,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function ChatWindow({ room, messages, lastReadChatId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, membersOpen, onToggleMembers, onOpenDiscussion }) {
+export default function ChatWindow({ room, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, membersOpen, onToggleMembers, onOpenDiscussion }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -20,7 +20,7 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
     newMessageCount,
     handleScroll,
     scrollToBottom,
-  } = useScrollBehavior({ messages, loading, lastReadChatId, isLoadingMore, hasMore, onLoadMore });
+  } = useScrollBehavior({ messages, loading, lastReadMessageId, isLoadingMore, hasMore, onLoadMore });
 
   // 방이 바뀌면 편집 상태 초기화
   useEffect(() => {
@@ -76,8 +76,8 @@ export default function ChatWindow({ room, messages, lastReadChatId, onSend, loa
   };
 
   const showDividerAfter = (msg, idx) =>
-    lastReadChatId !== null &&
-    msg.chatId === lastReadChatId &&
+    lastReadMessageId !== null &&
+    msg.chatId === lastReadMessageId &&
     idx < messages.length - 1;
 
   const showDateDividerBefore = (msg, idx) => {
