@@ -239,7 +239,7 @@ export default function ChatPage() {
     } catch (e) {
       // ignore
     }
-  }, [selectedRoomId]);
+  }, [selectedRoomId, removeRoom]);
 
   // 채팅방 이름 변경
   const handleRenameRoom = useCallback(async (newTitle) => {
@@ -250,7 +250,7 @@ export default function ChatPage() {
     } catch (e) {
       // ignore
     }
-  }, [selectedRoomId]);
+  }, [selectedRoomId, patchRoom]);
 
   // Space 생성 완료: modal 닫기 + 목록 갱신 + 생성된 Space 자동 선택
   const handleSpaceCreated = useCallback((roomId) => {
