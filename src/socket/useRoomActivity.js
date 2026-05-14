@@ -10,7 +10,7 @@ import { useEffect, useRef, useCallback } from "react";
  * 핵심 원칙: activeRoomIdRef는 전송 결정과 동시에(전송 호출 이전에) 갱신한다.
  * 이렇게 해야 어떤 코드가 ref를 읽더라도 전송 의도와 일치하는 상태를 본다.
  */
-export function useRoomActivity({ selectedRoomId, connected, sendRoomActive, sendRoomInactive }) {
+export function useRoomActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive }) {
   // document가 현재 보이는 상태인지 (다른 탭으로 이동하면 false)
   const isDocumentVisibleRef = useRef(!document.hidden);
   // window가 현재 포커스된 상태인지 (Alt+Tab 등으로 앱 전환하면 false)
@@ -23,10 +23,10 @@ export function useRoomActivity({ selectedRoomId, connected, sendRoomActive, sen
   const activeRoomIdRef = useRef(null);
 
   // useCallback 내부에서 최신값 참조용 ref
-  const selectedRoomIdRef = useRef(selectedRoomId);
+  const selectedSpaceIdRef = useRef(selectedSpaceId);
   const connectedRef = useRef(connected);
 
-  useEffect(() => { selectedRoomIdRef.current = selectedRoomId; }, [selectedRoomId]);
+  useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
   useEffect(() => { connectedRef.current = connected; }, [connected]);
 
   /**
@@ -38,7 +38,7 @@ export function useRoomActivity({ selectedRoomId, connected, sendRoomActive, sen
    * → 어떤 코드가 전송 직후 ref를 읽어도 이미 올바른 상태다.
    */
   const evaluateAndSync = useCallback(() => {
-    const roomId = selectedRoomIdRef.current;
+    const roomId = selectedSpaceIdRef.current;
 
     // active 조건: 연결됨 AND 방 선택됨 AND 문서 보임 AND 창 포커스됨
     const shouldBeActive =
@@ -86,12 +86,12 @@ export function useRoomActivity({ selectedRoomId, connected, sendRoomActive, sen
     }
   }, [sendRoomInactive]);
 
-  // selectedRoomId가 null이 되면 ROOM_INACTIVE 전송 후 ref null로 초기화
+  // selectedSpaceId가 null이 되면 ROOM_INACTIVE 전송 후 ref null로 초기화
   // null → roomId 전환(방 선택/전환)은 notifyEntered에서 처리한다.
   useEffect(() => {
     if (!connected) return;
 
-    if (selectedRoomId === null) {
+    if (selectedSpaceId === null) {
       const roomToDeactivate = activeRoomIdRef.current;
       if (roomToDeactivate !== null) {
         // ref를 먼저 null로 갱신한 뒤 전송
@@ -99,7 +99,7 @@ export function useRoomActivity({ selectedRoomId, connected, sendRoomActive, sen
         sendRoomInactive(roomToDeactivate);
       }
     }
-  }, [selectedRoomId, connected, sendRoomInactive]);
+  }, [selectedSpaceId, connected, sendRoomInactive]);
 
   // 연결 끊김 시 ref 초기화 (서버가 세션을 cleanup하므로 FE도 동기화)
   // 재연결 후 ENTER_ROOM 재전송은 ChatPage의 reconnect useEffect가 담당한다.

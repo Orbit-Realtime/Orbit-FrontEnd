@@ -9,7 +9,7 @@ const sortRooms = (rooms) =>
     return new Date(b.createdDate) - new Date(a.createdDate);
   });
 
-export function useSpaces(selectedRoomId) {
+export function useSpaces(selectedSpaceId) {
   const [spaces, setSpaces] = useState([]);
   const [spacesError, setSpacesError] = useState(false);
 
@@ -78,8 +78,8 @@ export function useSpaces(selectedRoomId) {
   }, []);
 
   const selectedSpace = useMemo(
-    () => spaces.find((r) => r.chatRoomId === selectedRoomId),
-    [spaces, selectedRoomId]
+    () => spaces.find((r) => r.chatRoomId === selectedSpaceId),
+    [spaces, selectedSpaceId]
   );
 
   return {

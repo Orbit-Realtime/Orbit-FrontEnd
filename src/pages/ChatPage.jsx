@@ -19,10 +19,10 @@ export default function ChatPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // 데이터 상태 — realtime 연동 (위치 유지)
-  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [selectedSpaceId, setSelectedSpaceId] = useState(null);
 
   const { spaces, spacesError, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
-    useSpaces(selectedRoomId);
+    useSpaces(selectedSpaceId);
   const [messages, setMessages] = useState([]);
   const [lastReadMessageId, setLastReadMessageId] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -40,7 +40,7 @@ export default function ChatPage() {
   } = useDiscussionQueue();
 
   // refs — realtime 연동 (위치 유지)
-  const selectedRoomIdRef = useRef(null);
+  const selectedSpaceIdRef = useRef(null);
   const prevConnectedRef = useRef(false);
   const isInitialConnectRef = useRef(true);
   const historyFetchIdRef = useRef(0);
@@ -51,7 +51,7 @@ export default function ChatPage() {
     (data) => {
       switch (data.messageType) {
         case "CHAT_MESSAGE":
-          if (data.chatRoomId === selectedRoomId) {
+          if (data.chatRoomId === selectedSpaceId) {
             setMessages((prev) => [...prev, data]);
           }
           break;
@@ -61,7 +61,7 @@ export default function ChatPage() {
           break;
 
         case "READ_EVENT": {
-          if (data.chatRoomId !== selectedRoomId) break;
+          if (data.chatRoomId !== selectedSpaceId) break;
 
           const lastProcessed = memberLastReadRef.current[data.memberId] ?? null;
           if (lastProcessed !== null && data.currentLastReadChatId <= lastProcessed) break;
@@ -103,15 +103,15 @@ export default function ChatPage() {
           break;
       }
     },
-    [selectedRoomId, applySpaceUpdate, appendDiscussionEvent]
+    [selectedSpaceId, applySpaceUpdate, appendDiscussionEvent]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
 
-  const { notifyEntered } = useRoomActivity({ selectedRoomId, connected, sendRoomActive, sendRoomInactive });
+  const { notifyEntered } = useRoomActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive });
 
-  // selectedRoomIdRef를 최신 selectedRoomId로 동기화 (reconnect effect에서 사용)
-  useEffect(() => { selectedRoomIdRef.current = selectedRoomId; }, [selectedRoomId]);
+  // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
+  useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
 
   // wsError 자동 소멸 (4초)
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function ChatPage() {
       if (!isInitialConnectRef.current) {
         refreshSpaces();
 
-        const roomId = selectedRoomIdRef.current;
+        const roomId = selectedSpaceIdRef.current;
         if (roomId !== null) {
           sendEnterRoom(roomId);
           notifyEntered(roomId);
@@ -162,12 +162,12 @@ export default function ChatPage() {
   }, [connected, sendEnterRoom, notifyEntered, refreshSpaces]);
 
   // 채팅방 선택
-  const handleSelectRoom = useCallback(
+  const handleSelectSpace = useCallback(
     (roomId) => {
-      if (roomId === selectedRoomId) return;
+      if (roomId === selectedSpaceId) return;
       setPanelState(null);
       memberLastReadRef.current = {};
-      setSelectedRoomId(roomId);
+      setSelectedSpaceId(roomId);
       setMessages([]);
       setLastReadMessageId(null);
       setHasMore(false);
@@ -199,7 +199,7 @@ export default function ChatPage() {
           setHistoryLoading(false);
         });
     },
-    [selectedRoomId, sendEnterRoom, notifyEntered]
+    [selectedSpaceId, sendEnterRoom, notifyEntered]
   );
 
   // 이전 메시지 로드
@@ -207,7 +207,7 @@ export default function ChatPage() {
     if (!hasMore || isLoadingMore || !oldestChatId) return;
     setIsLoadingMore(true);
     const fetchId = historyFetchIdRef.current;
-    getMessageHistory(selectedRoomId, oldestChatId)
+    getMessageHistory(selectedSpaceId, oldestChatId)
       .then((result) => {
         if (fetchId !== historyFetchIdRef.current) return;
         const { messages: older, hasMore: more } = result.data;
@@ -217,47 +217,47 @@ export default function ChatPage() {
       })
       .catch(() => {})
       .finally(() => setIsLoadingMore(false));
-  }, [hasMore, isLoadingMore, oldestChatId, selectedRoomId]);
+  }, [hasMore, isLoadingMore, oldestChatId, selectedSpaceId]);
 
   // 메시지 전송
   const handleSend = useCallback(
     (message) => {
-      sendChatMessage(selectedRoomId, message);
+      sendChatMessage(selectedSpaceId, message);
     },
-    [selectedRoomId, sendChatMessage]
+    [selectedSpaceId, sendChatMessage]
   );
 
   // 채팅방 나가기
   const handleLeaveRoom = useCallback(async () => {
-    if (!selectedRoomId) return;
-    const roomId = selectedRoomId;
+    if (!selectedSpaceId) return;
+    const roomId = selectedSpaceId;
     try {
       await leaveSpace(roomId);
-      setSelectedRoomId(null);
+      setSelectedSpaceId(null);
       setPanelState(null);
       removeSpace(roomId);
     } catch (e) {
       // ignore
     }
-  }, [selectedRoomId, removeSpace]);
+  }, [selectedSpaceId, removeSpace]);
 
   // 채팅방 이름 변경
   const handleRenameRoom = useCallback(async (newTitle) => {
-    if (!selectedRoomId || !newTitle.trim()) return;
+    if (!selectedSpaceId || !newTitle.trim()) return;
     try {
-      await renameSpace(selectedRoomId, newTitle.trim());
-      patchSpace(selectedRoomId, { title: newTitle.trim() });
+      await renameSpace(selectedSpaceId, newTitle.trim());
+      patchSpace(selectedSpaceId, { title: newTitle.trim() });
     } catch (e) {
       // ignore
     }
-  }, [selectedRoomId, patchSpace]);
+  }, [selectedSpaceId, patchSpace]);
 
   // Space 생성 완료: modal 닫기 + 목록 갱신 + 생성된 Space 자동 선택
   const handleSpaceCreated = useCallback((roomId) => {
     setShowCreateModal(false);
     refreshSpaces();
-    if (roomId) handleSelectRoom(roomId);
-  }, [refreshSpaces, handleSelectRoom]);
+    if (roomId) handleSelectSpace(roomId);
+  }, [refreshSpaces, handleSelectSpace]);
 
   return (
     <div className="relative flex flex-col h-screen bg-neutral-900 text-white overflow-hidden">
@@ -306,8 +306,8 @@ export default function ChatPage() {
               spaces={spaces}
               spacesError={spacesError}
               onRetry={refreshSpaces}
-              selectedSpaceId={selectedRoomId}
-              onSelectSpace={handleSelectRoom}
+              selectedSpaceId={selectedSpaceId}
+              onSelectSpace={handleSelectSpace}
             />
           </div>
 
@@ -327,7 +327,7 @@ export default function ChatPage() {
 
         {/* ── Main Conversation ── */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {selectedRoomId ? (
+          {selectedSpaceId ? (
             <ChatWindow
               room={selectedSpace}
               messages={messages}
@@ -335,7 +335,7 @@ export default function ChatPage() {
               onSend={handleSend}
               loading={historyLoading}
               historyError={historyError}
-              onBack={() => setSelectedRoomId(null)}
+              onBack={() => setSelectedSpaceId(null)}
               onLeave={handleLeaveRoom}
               onRename={handleRenameRoom}
               connected={connected}
@@ -357,9 +357,9 @@ export default function ChatPage() {
         </div>
 
         {/* ── Right Panel — 멤버 목록 ── */}
-        {panelState?.type === "members" && selectedRoomId && (
+        {panelState?.type === "members" && selectedSpaceId && (
           <MemberPanel
-            chatRoomId={selectedRoomId}
+            chatRoomId={selectedSpaceId}
             onClose={() => setPanelState(null)}
           />
         )}
