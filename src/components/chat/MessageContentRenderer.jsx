@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -15,6 +15,8 @@ function sanitizeHref(href) {
     return null;
   }
 }
+
+const REMARK_PLUGINS = [remarkGfm];
 
 // fenced code block 전용 컴포넌트 — 언어 라벨 + copy 버튼 + syntax highlight
 function CodeBlock({ language, code }) {
@@ -131,12 +133,14 @@ const markdownComponents = {
   ),
 };
 
-export default function MessageContentRenderer({ content, className = "" }) {
+function MessageContentRenderer({ content, className = "" }) {
   return (
     <div className={`whitespace-pre-wrap break-words${className ? ` ${className}` : ""}`}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={markdownComponents}>
         {content}
       </ReactMarkdown>
     </div>
   );
 }
+
+export default memo(MessageContentRenderer);
