@@ -17,10 +17,18 @@ function sanitizeHref(href) {
 }
 
 const REMARK_PLUGINS = [remarkGfm];
+const COLLAPSE_LINE_THRESHOLD = 15;
+const COLLAPSE_CHAR_THRESHOLD = 800;
+const COLLAPSED_MAX_HEIGHT = "240px";
 
 // fenced code block 전용 컴포넌트 — 언어 라벨 + copy 버튼 + syntax highlight
 function CodeBlock({ language, code }) {
   const [copied, setCopied] = useState(false);
+
+  const lineCount = code.split("\n").length;
+  const charCount = code.length;
+  const isLong = lineCount > COLLAPSE_LINE_THRESHOLD || charCount > COLLAPSE_CHAR_THRESHOLD;
+  const [collapsed, setCollapsed] = useState(isLong);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code).catch(() => {});
@@ -40,15 +48,40 @@ function CodeBlock({ language, code }) {
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      {/* syntax highlight — PreTag="div"으로 pre 중첩 방지 */}
-      <SyntaxHighlighter
-        language={language || "text"}
-        style={oneDark}
-        PreTag="div"
-        customStyle={{ margin: 0, borderRadius: 0, fontSize: "0.75rem", overflowX: "auto" }}
+      {/* 코드 영역 래퍼 — collapsed 시 max-height + overflow-hidden */}
+      <div
+        className={`relative ${collapsed ? "overflow-hidden" : "overflow-visible"}`}
+        style={{ maxHeight: collapsed ? COLLAPSED_MAX_HEIGHT : "none" }}
       >
-        {code}
-      </SyntaxHighlighter>
+        {/* SyntaxHighlighter는 항상 렌더 — 펼칠 때 Prism 재파싱 없음 */}
+        <SyntaxHighlighter
+          language={language || "text"}
+          style={oneDark}
+          PreTag="div"
+          customStyle={{ margin: 0, borderRadius: 0, fontSize: "0.75rem", overflowX: "auto" }}
+        >
+          {code}
+        </SyntaxHighlighter>
+        {/* fade overlay — collapsed 상태에서만 표시 */}
+        {collapsed && (
+          <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-[#282c34] to-transparent pointer-events-none" />
+        )}
+      </div>
+      {/* 토글 버튼 — 긴 코드블럭에만 표시 */}
+      {isLong && (
+        <div className="flex justify-center py-1 bg-[#21252b] border-t border-white/10 select-none">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="text-neutral-400 hover:text-white text-xs transition-colors"
+          >
+            {collapsed
+              ? lineCount > COLLAPSE_LINE_THRESHOLD
+                ? `▾ 펼치기 (${lineCount}줄)`
+                : `▾ 펼치기 (${charCount}자)`
+              : "▴ 접기"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -92,7 +125,7 @@ const markdownComponents = {
   // 언어 없는 code block도 CodeBlock으로 렌더링한다.
   pre: ({ node, children }) => {
     const child = Array.isArray(children) ? children[0] : children;
-    if (child && typeof child === "object" && child.type === "code") {
+    if (child && typeof child === "object" && node?.children?.[0]?.tagName === "code") {
       const { className = "", children: code } = child.props;
       const match = /language-(\w+)/.exec(className);
       return (
