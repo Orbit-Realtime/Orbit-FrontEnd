@@ -4,6 +4,18 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
+// http/https/mailto 프로토콜만 허용. 그 외(javascript:, data: 등)는 null 반환.
+// new URL()이 throw하면 상대경로 또는 잘못된 URL → 마찬가지로 null.
+function sanitizeHref(href) {
+  if (!href) return null;
+  try {
+    const { protocol } = new URL(href);
+    return ["http:", "https:", "mailto:"].includes(protocol) ? href : null;
+  } catch {
+    return null;
+  }
+}
+
 // fenced code block 전용 컴포넌트 — 언어 라벨 + copy 버튼 + syntax highlight
 function CodeBlock({ language, code }) {
   const [copied, setCopied] = useState(false);
@@ -48,12 +60,20 @@ const markdownComponents = {
   h4:         ({ node, children })       => <h4 className="text-sm font-semibold mb-0.5">{children}</h4>,
   h5:         ({ node, children })       => <h5 className="text-xs font-semibold mb-0.5">{children}</h5>,
   h6:         ({ node, children })       => <h6 className="text-xs font-medium mb-0.5">{children}</h6>,
-  a:          ({ node, href, children }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer"
-       className="underline opacity-80 hover:opacity-100 break-all">
-      {children}
-    </a>
-  ),
+  a: ({ node, href, children }) => {
+    const safe = sanitizeHref(href);
+    return safe ? (
+      <a href={safe} target="_blank" rel="noopener noreferrer"
+         className="underline opacity-80 hover:opacity-100 break-all">
+        {children}
+      </a>
+    ) : (
+      <span className="text-neutral-400 cursor-not-allowed no-underline break-all"
+            title="안전하지 않은 링크">
+        {children}
+      </span>
+    );
+  },
   // pre가 fenced code block을 완전히 인터셉트한다.
   // code는 inline code 스타일만 담당하고, fenced block은 pass-through로 pre에 위임한다.
   code: ({ node, className, children, ...props }) => {
