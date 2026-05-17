@@ -215,7 +215,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                       <div className={`mt-0.5 flex ${msg.senderId === auth?.memberId ? "justify-end" : "justify-start"}`}>
                         <button
                           onClick={() => onOpenDiscussion(msg)}
-                          className="opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-opacity duration-150 flex items-center gap-1 px-2 py-0.5 rounded text-xs text-neutral-500 hover:text-neutral-300 hover:bg-neutral-700/50"
+                          className="opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-opacity duration-150 flex items-center gap-1 px-2 py-0.5 rounded-md text-xs text-orbit-subtle hover:text-orbit-cyan hover:bg-orbit-surface2 border border-transparent hover:border-orbit-border"
                         >
                           <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current flex-shrink-0">
                             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />

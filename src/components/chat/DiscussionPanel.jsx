@@ -181,9 +181,9 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
       {/* Root message preview */}
       <div className="px-4 py-3 border-b border-orbit-border flex-shrink-0 bg-orbit-surface">
-        <p className="text-xs text-neutral-400 mb-1 font-medium">{message.senderNickname}</p>
-        <p className="text-sm text-neutral-300 line-clamp-3 break-words">{message.message}</p>
-        <p className="text-xs text-neutral-500 mt-1">{formatMessageTime(message.createdDate)}</p>
+        <p className="text-xs text-orbit-secondary mb-1 font-medium">{message.senderNickname}</p>
+        <p className="text-sm text-orbit-text line-clamp-3 break-words">{message.message}</p>
+        <p className="text-xs text-orbit-muted mt-1">{formatMessageTime(message.createdDate)}</p>
       </div>
 
       {/* 콘텐츠 */}
