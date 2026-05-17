@@ -281,7 +281,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
             </div>
 
             {/* 입력창 */}
-            <div className="px-3 py-3 border-t border-neutral-700 flex-shrink-0">
+            <div className="px-3 py-3 border-t border-orbit-border flex-shrink-0">
               {!connected && (
                 <p className="text-xs text-red-400 mb-2 text-center">
                   연결이 끊어져 메시지를 전송할 수 없습니다.
@@ -297,12 +297,12 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
                   onCompositionEnd={() => { isComposingRef.current = false; }}
                   placeholder={connected ? "메시지 입력..." : "연결 중..."}
                   disabled={!connected}
-                  className="flex-1 min-w-0 bg-neutral-800 text-sm text-white rounded-lg px-3 py-2 outline-none border border-neutral-700 focus:border-neutral-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="orbit-input flex-1 min-w-0"
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!inputContent.trim() || !connected}
-                  className="flex-shrink-0 px-3 py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-neutral-700 disabled:cursor-not-allowed rounded-lg text-sm text-white transition-colors"
+                  className="flex-shrink-0 px-3 py-2 bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-elevated text-orbit-bg disabled:text-orbit-muted disabled:cursor-not-allowed rounded-lg text-sm transition-colors"
                 >
                   전송
                 </button>

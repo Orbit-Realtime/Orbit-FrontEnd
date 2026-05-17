@@ -256,13 +256,13 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
         </div>
 
         {/* 입력창 */}
-        <div className="flex-shrink-0 px-4 py-3 border-t border-neutral-700">
+        <div className="flex-shrink-0 px-4 py-3 border-t border-orbit-border">
           {!connected && (
             <p className="text-xs text-red-400 mb-2 text-center">
               연결이 끊어져 메시지를 전송할 수 없습니다.
             </p>
           )}
-          <div className="flex items-end gap-2 bg-neutral-700 rounded-xl px-4 py-2.5">
+          <div className="flex items-end gap-2 bg-orbit-surface2 rounded-xl border border-orbit-border focus-within:border-orbit-border-strong px-4 py-2.5">
             <textarea
               ref={textareaRef}
               value={text}
@@ -273,14 +273,14 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
               placeholder={connected ? "메시지를 입력하세요" : "연결 중..."}
               disabled={!connected}
               rows={1}
-              className="flex-1 bg-transparent text-white text-sm placeholder-neutral-500 resize-none outline-none max-h-32 leading-5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent text-orbit-text text-sm placeholder:text-orbit-subtle resize-none outline-none max-h-32 leading-5 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSend}
               disabled={!text.trim() || !connected}
-              className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500 hover:bg-blue-400 disabled:bg-neutral-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              className="flex-shrink-0 w-8 h-8 rounded-lg bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-elevated text-orbit-bg disabled:text-orbit-muted disabled:cursor-not-allowed transition-colors flex items-center justify-center"
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white rotate-90">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current rotate-90">
                 <path d="M2 21L23 12 2 3v7l15 2-15 2v7z" />
               </svg>
             </button>
