@@ -344,7 +344,7 @@ export default function ChatPage() {
           <div className="flex-shrink-0 border-t border-neutral-700 px-3 py-3">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-neutral-700 hover:bg-neutral-600 text-sm text-white transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-orbit-border bg-orbit-surface hover:bg-orbit-surface2 text-sm text-orbit-secondary hover:text-orbit-text transition-colors"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
