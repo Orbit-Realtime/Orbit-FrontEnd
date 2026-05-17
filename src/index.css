@@ -15,3 +15,62 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ─── Orbit Design System ─── */
+
+@layer components {
+
+  /* 패널 컨테이너: sidebar, right panel 등 border가 있는 배경 영역 */
+  .orbit-panel {
+    @apply bg-orbit-surface;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* 카드: 한 단계 띄운 elevated 표면 */
+  .orbit-card {
+    @apply bg-orbit-elevated rounded-xl;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  /* 입력창 공통 베이스: textarea, input */
+  .orbit-input {
+    @apply bg-orbit-surface2 text-orbit-text text-sm
+           rounded-lg px-3 py-2 outline-none resize-none
+           placeholder:text-orbit-subtle
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .orbit-input:focus {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* 글로우 이펙트: cyan accent halo */
+  .orbit-glow {
+    box-shadow: 0 0 16px rgba(67, 217, 255, 0.18);
+  }
+
+}
+
+@layer utilities {
+
+  /* 스크롤바: 스크롤 영역에 적용할 utility class */
+  .orbit-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .orbit-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .orbit-scrollbar::-webkit-scrollbar-thumb {
+    background: #617089;
+    border-radius: 2px;
+  }
+
+  .orbit-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #8A97AD;
+  }
+
+}
