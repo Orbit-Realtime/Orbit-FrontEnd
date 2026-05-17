@@ -263,6 +263,11 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
             {/* 입력창 */}
             <div className="px-3 py-3 border-t border-neutral-700 flex-shrink-0">
+              {!connected && (
+                <p className="text-xs text-red-400 mb-2 text-center">
+                  연결이 끊어져 메시지를 전송할 수 없습니다.
+                </p>
+              )}
               <div className="flex gap-2">
                 <textarea
                   rows={1}
@@ -271,12 +276,13 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
                   onKeyDown={handleKeyDown}
                   onCompositionStart={() => { isComposingRef.current = true; }}
                   onCompositionEnd={() => { isComposingRef.current = false; }}
-                  placeholder="메시지 입력..."
-                  className="flex-1 min-w-0 bg-neutral-800 text-sm text-white rounded-lg px-3 py-2 outline-none border border-neutral-700 focus:border-neutral-500 resize-none"
+                  placeholder={connected ? "메시지 입력..." : "연결 중..."}
+                  disabled={!connected}
+                  className="flex-1 min-w-0 bg-neutral-800 text-sm text-white rounded-lg px-3 py-2 outline-none border border-neutral-700 focus:border-neutral-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={!inputContent.trim()}
+                  disabled={!inputContent.trim() || !connected}
                   className="flex-shrink-0 px-3 py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-neutral-700 disabled:cursor-not-allowed rounded-lg text-sm text-white transition-colors"
                 >
                   전송
