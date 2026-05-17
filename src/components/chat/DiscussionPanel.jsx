@@ -53,7 +53,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   const discussionId = discussion?.discussionId ?? null;
 
   // 서버 기준으로 메시지 목록을 replace하고 processedIds를 rebuild한다.
-  // 초기 로드·reconnect re-sync 공통 사용. 에러는 호출부에서 처리한다.
+  // 초기 로드·reconnect re-sync 공통 사용. 성공 시 messagesError 해제.
   const syncDiscussionMessages = useCallback(async () => {
     if (!discussionId) return;
     const fetchId = ++syncFetchIdRef.current;
@@ -62,6 +62,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
     const messages = result.data ?? [];
     processedMessageIdsRef.current = new Set(messages.map((m) => m.discussionMessageId));
     setDiscussionMessages(messages);
+    setMessagesError(null);
   }, [discussionId]);
 
   // Queue에서 현재 discussionId와 일치하는 이벤트만 append한다.
@@ -112,7 +113,9 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
     const canSync = status === "loaded" && discussion?.discussionId;
 
     if (wasDisconnected && isReconnected && canSync) {
-      syncDiscussionMessages().catch(() => {});
+      syncDiscussionMessages().catch(() => {
+        setMessagesError("메시지를 불러오지 못했습니다.");
+      });
     }
 
     prevConnectedRef.current = connected;
@@ -237,8 +240,24 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
               )}
 
               {!messagesLoading && messagesError && (
-                <div className="flex items-center justify-center flex-1 px-4">
+                <div className="flex flex-col items-center justify-center flex-1 gap-3 px-4">
                   <p className="text-sm text-neutral-500 text-center">{messagesError}</p>
+                  <button
+                    onClick={() => {
+                      setMessagesError(null);
+                      setMessagesLoading(true);
+                      syncDiscussionMessages()
+                        .catch(() => {
+                          setMessagesError("메시지를 불러오지 못했습니다.");
+                        })
+                        .finally(() => {
+                          setMessagesLoading(false);
+                        });
+                    }}
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    다시 시도
+                  </button>
                 </div>
               )}
 
