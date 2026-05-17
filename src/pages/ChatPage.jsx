@@ -289,7 +289,7 @@ export default function ChatPage() {
   }, [refreshSpaces, handleSelectSpace]);
 
   return (
-    <div className="relative flex flex-col h-screen bg-neutral-900 text-white overflow-hidden">
+    <div className="orbit-workspace relative flex flex-col h-screen text-white overflow-hidden">
       {/* 재연결 배너 */}
       {!connected && (
         <div className={`flex items-center justify-center gap-2 py-1.5 text-xs font-medium flex-shrink-0 ${
@@ -321,10 +321,10 @@ export default function ChatPage() {
       )}
 
       {/* 본문 — 3-column layout */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative z-10">
 
         {/* ── Sidebar ── */}
-        <div className="flex flex-col w-64 border-r border-neutral-700 flex-shrink-0">
+        <div className="flex flex-col w-64 border-r border-orbit-border bg-orbit-sidebar flex-shrink-0 relative z-10">
 
           {/* 사용자 헤더 */}
           <UserHeader connected={connected} />
@@ -341,7 +341,7 @@ export default function ChatPage() {
           </div>
 
           {/* New Space 버튼 */}
-          <div className="flex-shrink-0 border-t border-neutral-700 px-3 py-3">
+          <div className="flex-shrink-0 border-t border-orbit-border px-3 py-3">
             <button
               onClick={() => setShowCreateModal(true)}
               className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-orbit-border bg-orbit-surface hover:bg-orbit-surface2 text-sm text-orbit-secondary hover:text-orbit-text transition-colors"

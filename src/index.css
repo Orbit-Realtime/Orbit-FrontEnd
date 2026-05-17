@@ -74,3 +74,25 @@ code {
   }
 
 }
+
+/* ─── Orbit Workspace Base ─── */
+
+@layer components {
+
+  /* Root workspace: base bg + ambient radial glow (cyan top-left, blue bottom-right) */
+  .orbit-workspace {
+    background-color: #030712;
+    background-image:
+      radial-gradient(
+        ellipse 70% 50% at 15% 8%,
+        rgba(67, 217, 255, 0.05) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 50% 40% at 85% 92%,
+        rgba(59, 130, 246, 0.04) 0%,
+        transparent 70%
+      );
+  }
+
+}
