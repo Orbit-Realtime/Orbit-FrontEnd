@@ -147,7 +147,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   };
 
   return (
-    <div className="w-72 border-l border-neutral-700 flex flex-col flex-shrink-0 bg-neutral-900">
+    <div className="w-[420px] border-l border-neutral-700 flex flex-col flex-shrink-0 bg-neutral-900">
 
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 flex-shrink-0">
