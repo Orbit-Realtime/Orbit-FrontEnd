@@ -92,6 +92,14 @@ code {
     );
   }
 
+  /* Arc overlay: 배경 궤도선 (vignette 아래에서 엣지에서 자연 소멸) */
+  .orbit-arc-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 15;
+  }
+
 }
 
 /* ─── Orbit Workspace Base ─── */
