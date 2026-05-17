@@ -157,7 +157,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
   return (
     <div
-      className="relative border-l border-neutral-700 flex flex-col flex-shrink-0 bg-neutral-900"
+      className="relative border-l border-orbit-border flex flex-col flex-shrink-0 bg-orbit-bg"
       style={{ width: `${width}px` }}
     >
       {/* Resize handle */}
@@ -167,7 +167,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
       />
 
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-orbit-border flex-shrink-0">
         <span className="text-sm font-medium text-white">Discussion</span>
         <button
           onClick={onClose}
@@ -180,7 +180,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
       </div>
 
       {/* Root message preview */}
-      <div className="px-4 py-3 border-b border-neutral-700 flex-shrink-0 bg-neutral-800/50">
+      <div className="px-4 py-3 border-b border-orbit-border flex-shrink-0 bg-orbit-surface">
         <p className="text-xs text-neutral-400 mb-1 font-medium">{message.senderNickname}</p>
         <p className="text-sm text-neutral-300 line-clamp-3 break-words">{message.message}</p>
         <p className="text-xs text-neutral-500 mt-1">{formatMessageTime(message.createdDate)}</p>
