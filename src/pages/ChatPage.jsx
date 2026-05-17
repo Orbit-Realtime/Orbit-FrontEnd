@@ -219,6 +219,35 @@ export default function ChatPage() {
       .finally(() => setIsLoadingMore(false));
   }, [hasMore, isLoadingMore, oldestChatId, selectedSpaceId]);
 
+  // 메시지 history 재시도
+  const handleRetryHistory = useCallback(() => {
+    if (!selectedSpaceId) return;
+
+    setHistoryLoading(true);
+    setHistoryError(false);
+
+    const fetchId = ++historyFetchIdRef.current;
+
+    getMessageHistory(selectedSpaceId)
+      .then((result) => {
+        if (fetchId !== historyFetchIdRef.current) return;
+        const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
+        setMessages(msgs ?? []);
+        setLastReadMessageId(lastReadMessageId ?? null);
+        setHasMore(more ?? false);
+        setOldestChatId(msgs?.[0]?.chatId ?? null);
+        setHistoryError(false);
+      })
+      .catch(() => {
+        if (fetchId !== historyFetchIdRef.current) return;
+        setHistoryError(true);
+      })
+      .finally(() => {
+        if (fetchId !== historyFetchIdRef.current) return;
+        setHistoryLoading(false);
+      });
+  }, [selectedSpaceId]);
+
   // 메시지 전송
   const handleSend = useCallback(
     (message) => {
@@ -342,6 +371,7 @@ export default function ChatPage() {
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}
+              onRetryHistory={handleRetryHistory}
               membersOpen={panelState?.type === "members"}
               onToggleMembers={() => setPanelState((p) => (p?.type === "members" ? null : { type: "members" }))}
               onOpenDiscussion={(msg) => {

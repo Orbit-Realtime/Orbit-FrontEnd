@@ -4,7 +4,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, membersOpen, onToggleMembers, onOpenDiscussion }) {
+export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -167,8 +167,14 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                 <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : historyError ? (
-              <div className="flex items-center justify-center h-full text-neutral-500 text-sm">
-                메시지를 불러오지 못했습니다.
+              <div className="flex flex-col items-center justify-center h-full gap-3">
+                <p className="text-neutral-500 text-sm">메시지를 불러오지 못했습니다.</p>
+                <button
+                  onClick={onRetryHistory}
+                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  다시 시도
+                </button>
               </div>
             ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-full text-neutral-500 text-sm">
