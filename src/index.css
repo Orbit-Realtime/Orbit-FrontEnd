@@ -75,6 +75,25 @@ code {
 
 }
 
+/* ─── Orbit Overlay System ─── */
+
+@layer utilities {
+
+  /* Vignette: 가장자리 어두워짐 + 중앙 집중 효과 */
+  .orbit-vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+    background: radial-gradient(
+      ellipse 120% 100% at 50% 50%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.28) 100%
+    );
+  }
+
+}
+
 /* ─── Orbit Workspace Base ─── */
 
 @layer components {

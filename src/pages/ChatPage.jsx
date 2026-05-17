@@ -290,6 +290,9 @@ export default function ChatPage() {
 
   return (
     <div className="orbit-workspace relative flex flex-col h-screen text-white overflow-hidden">
+      {/* ── Background overlay ── */}
+      <div className="orbit-vignette" aria-hidden="true" />
+
       {/* 재연결 배너 */}
       {!connected && (
         <div className={`flex items-center justify-center gap-2 py-1.5 text-xs font-medium flex-shrink-0 ${
