@@ -58,7 +58,7 @@ function CodeBlock({ language, code }) {
           language={language || "text"}
           style={oneDark}
           PreTag="div"
-          customStyle={{ margin: 0, borderRadius: 0, fontSize: "0.75rem", overflowX: "auto" }}
+          customStyle={{ margin: 0, borderRadius: 0, fontSize: "0.75rem", overflowX: "auto", whiteSpace: "pre", wordBreak: "normal", overflowWrap: "normal" }}
         >
           {code}
         </SyntaxHighlighter>
