@@ -22,6 +22,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   // 이미 append된 discussionMessageId를 추적해 중복 append를 방지한다.
   // 컴포넌트 마운트마다 초기화되므로 panel 재오픈 시 자동 리셋된다.
   const processedMessageIdsRef = useRef(new Set());
+  const syncFetchIdRef = useRef(0);
   const isComposingRef = useRef(false);
   // reconnect 감지용: null=초기 마운트, false=단절, true=연결
   const prevConnectedRef = useRef(null);
@@ -52,7 +53,9 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   // 초기 로드·reconnect re-sync 공통 사용. 에러는 호출부에서 처리한다.
   const syncDiscussionMessages = useCallback(async () => {
     if (!discussionId) return;
+    const fetchId = ++syncFetchIdRef.current;
     const result = await getDiscussionMessages(discussionId);
+    if (fetchId !== syncFetchIdRef.current) return;
     const messages = result.data ?? [];
     processedMessageIdsRef.current = new Set(messages.map((m) => m.discussionMessageId));
     setDiscussionMessages(messages);
