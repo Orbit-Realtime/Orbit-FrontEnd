@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getDiscussion, createDiscussion, getDiscussionMessages } from "../../api/discussionApi";
 import { formatMessageTime } from "../../utils/formatTime";
-import MessageContentRenderer from "./MessageContentRenderer";
+import { useAuth } from "../../context/AuthContext";
+import DiscussionMessageItem from "./DiscussionMessageItem";
 
 export default function DiscussionPanel({ message, onClose, incomingDiscussionEvents, onConsumeDiscussionEvents, sendDiscussionMessage, connected }) {
+  const { auth } = useAuth();
   const messageId = message.chatId;
 
   const [status, setStatus] = useState("loading"); // "loading" | "not_found" | "error" | "loaded"
@@ -235,11 +237,11 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
               {!messagesLoading && !messagesError && discussionMessages.length > 0 && (
                 <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-3">
                   {discussionMessages.map((dm) => (
-                    <div key={dm.discussionMessageId} className="flex flex-col gap-0.5">
-                      <span className="text-xs font-medium text-neutral-300">{dm.senderNickname}</span>
-                      <MessageContentRenderer content={dm.content} className="text-sm text-neutral-200" />
-                      <span className="text-xs text-neutral-500">{formatMessageTime(dm.createdDate)}</span>
-                    </div>
+                    <DiscussionMessageItem
+                      key={dm.discussionMessageId}
+                      dm={dm}
+                      isMine={dm.senderId === auth?.memberId}
+                    />
                   ))}
                 </div>
               )}
@@ -248,15 +250,15 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
             {/* 입력창 */}
             <div className="px-3 py-3 border-t border-neutral-700 flex-shrink-0">
               <div className="flex gap-2">
-                <input
-                  type="text"
+                <textarea
+                  rows={1}
                   value={inputContent}
                   onChange={(e) => setInputContent(e.target.value)}
                   onKeyDown={handleKeyDown}
                   onCompositionStart={() => { isComposingRef.current = true; }}
                   onCompositionEnd={() => { isComposingRef.current = false; }}
                   placeholder="메시지 입력..."
-                  className="flex-1 min-w-0 bg-neutral-800 text-sm text-white rounded-lg px-3 py-2 outline-none border border-neutral-700 focus:border-neutral-500"
+                  className="flex-1 min-w-0 bg-neutral-800 text-sm text-white rounded-lg px-3 py-2 outline-none border border-neutral-700 focus:border-neutral-500 resize-none"
                 />
                 <button
                   onClick={handleSendMessage}
