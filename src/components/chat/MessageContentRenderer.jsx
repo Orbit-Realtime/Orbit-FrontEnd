@@ -37,13 +37,13 @@ function CodeBlock({ language, code }) {
   };
 
   return (
-    <div className="my-1.5 rounded overflow-hidden text-xs border border-white/10">
+    <div className="my-1.5 rounded overflow-hidden text-xs border border-orbit-border">
       {/* header: 언어 라벨 + copy 버튼 */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#21252b] select-none">
-        <span className="font-mono text-neutral-400">{language || "text"}</span>
+        <span className="font-mono text-orbit-muted">{language || "text"}</span>
         <button
           onClick={handleCopy}
-          className="text-neutral-400 hover:text-white text-xs transition-colors"
+          className="text-orbit-muted hover:text-white text-xs transition-colors"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
@@ -69,10 +69,10 @@ function CodeBlock({ language, code }) {
       </div>
       {/* 토글 버튼 — 긴 코드블럭에만 표시 */}
       {isLong && (
-        <div className="flex justify-center py-1 bg-[#21252b] border-t border-white/10 select-none">
+        <div className="flex justify-center py-1 bg-[#21252b] border-t border-orbit-border select-none">
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="text-neutral-400 hover:text-white text-xs transition-colors"
+            className="text-orbit-muted hover:text-white text-xs transition-colors"
           >
             {collapsed
               ? lineCount > COLLAPSE_LINE_THRESHOLD
@@ -103,7 +103,7 @@ const markdownComponents = {
         {children}
       </a>
     ) : (
-      <span className="text-neutral-400 cursor-not-allowed no-underline break-all"
+      <span className="text-orbit-muted cursor-not-allowed no-underline break-all"
             title="안전하지 않은 링크">
         {children}
       </span>
