@@ -94,9 +94,9 @@ function CodeBlock({ language, code }) {
 // 모듈 수준 정의 — 렌더마다 재생성하지 않는다.
 const markdownComponents = {
   p:          ({ node, children })       => <p className="mb-1 last:mb-0">{children}</p>,
-  h1:         ({ node, children })       => <h1 className="text-base font-bold mt-2 mb-1 first:mt-0">{children}</h1>,
-  h2:         ({ node, children })       => <h2 className="text-sm font-bold mt-1 mb-1 first:mt-0">{children}</h2>,
-  h3:         ({ node, children })       => <h3 className="text-sm font-semibold mt-1 mb-0.5 first:mt-0">{children}</h3>,
+  h1:         ({ node, children })       => <h1 className="text-base font-bold mt-2 mb-1 pb-1 border-b border-white/[0.08] first:mt-0">{children}</h1>,
+  h2:         ({ node, children })       => <h2 className="text-sm font-bold mt-2 mb-1 text-orbit-secondary first:mt-0">{children}</h2>,
+  h3:         ({ node, children })       => <h3 className="text-sm font-medium mt-1.5 mb-0.5 text-orbit-muted first:mt-0">{children}</h3>,
   h4:         ({ node, children })       => <h4 className="text-sm font-semibold mb-0.5">{children}</h4>,
   h5:         ({ node, children })       => <h5 className="text-xs font-semibold mb-0.5">{children}</h5>,
   h6:         ({ node, children })       => <h6 className="text-xs font-medium mb-0.5">{children}</h6>,
