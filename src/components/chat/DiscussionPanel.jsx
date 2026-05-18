@@ -171,7 +171,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
         <span className="text-sm font-medium text-white">Discussion</span>
         <button
           onClick={onClose}
-          className="text-neutral-400 hover:text-white transition-colors"
+          className="text-orbit-muted hover:text-white transition-colors"
         >
           <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
@@ -198,15 +198,15 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
         {status === "not_found" && (
           <div className="flex flex-col items-center justify-center flex-1 gap-4 px-4">
             <div className="text-center">
-              <p className="text-neutral-300 text-sm font-medium mb-1">Discussion 없음</p>
-              <p className="text-neutral-500 text-xs">
+              <p className="text-orbit-secondary text-sm font-medium mb-1">Discussion 없음</p>
+              <p className="text-orbit-subtle text-xs">
                 이 메시지에 대한 Discussion을 시작하세요.
               </p>
             </div>
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="w-full py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-neutral-600 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
+              className="w-full py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-orbit-surface2 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
             >
               {creating ? "생성 중..." : "Start Discussion"}
             </button>
@@ -218,7 +218,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
         {status === "error" && (
           <div className="flex flex-col items-center justify-center flex-1 gap-3 px-4">
-            <p className="text-neutral-500 text-sm text-center">불러오지 못했습니다.</p>
+            <p className="text-orbit-subtle text-sm text-center">불러오지 못했습니다.</p>
             <button
               onClick={loadDiscussion}
               className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
@@ -241,7 +241,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
               {!messagesLoading && messagesError && (
                 <div className="flex flex-col items-center justify-center flex-1 gap-3 px-4">
-                  <p className="text-sm text-neutral-500 text-center">{messagesError}</p>
+                  <p className="text-sm text-orbit-subtle text-center">{messagesError}</p>
                   <button
                     onClick={() => {
                       setMessagesError(null);
@@ -263,7 +263,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
               {!messagesLoading && !messagesError && discussionMessages.length === 0 && (
                 <div className="flex items-center justify-center flex-1 px-4">
-                  <p className="text-sm text-neutral-500 text-center">아직 Discussion 메시지가 없습니다.</p>
+                  <p className="text-sm text-orbit-subtle text-center">아직 Discussion 메시지가 없습니다.</p>
                 </div>
               )}
 

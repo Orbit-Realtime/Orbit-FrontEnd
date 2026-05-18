@@ -100,10 +100,10 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
       {/* 메인 채팅 영역 */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* 상단 헤더 */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-700 flex-shrink-0">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-orbit-border flex-shrink-0">
           <button
             onClick={onBack}
-            className="md:hidden flex-shrink-0 text-neutral-400 hover:text-white transition-colors"
+            className="md:hidden flex-shrink-0 text-orbit-muted hover:text-white transition-colors"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
               <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
@@ -118,12 +118,12 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
               onChange={(e) => setEditTitle(e.target.value)}
               onBlur={commitRename}
               onKeyDown={handleTitleKeyDown}
-              className="flex-1 bg-neutral-700 text-white text-sm font-bold px-2 py-1 rounded outline-none border border-neutral-500 min-w-0"
+              className="flex-1 bg-orbit-elevated text-white text-sm font-bold px-2 py-1 rounded outline-none border border-orbit-border-strong min-w-0"
             />
           ) : (
             <button
               onClick={startEditTitle}
-              className="flex-1 text-left font-bold text-white hover:text-neutral-300 transition-colors truncate"
+              className="flex-1 text-left font-bold text-white hover:text-orbit-secondary transition-colors truncate"
               title="클릭하여 이름 변경"
             >
               {space?.title ?? ""}
@@ -135,7 +135,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
             onClick={onToggleMembers}
             title="멤버 목록"
             className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${
-              membersOpen ? "bg-neutral-600 text-white" : "text-neutral-400 hover:text-white hover:bg-neutral-700"
+              membersOpen ? "bg-orbit-elevated text-white" : "text-orbit-muted hover:text-white hover:bg-orbit-surface2"
             }`}
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
@@ -147,7 +147,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
           <button
             onClick={() => setLeaveConfirm(true)}
             title="채팅방 나가기"
-            className="flex-shrink-0 p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-700 transition-colors"
+            className="flex-shrink-0 p-1.5 rounded-lg text-orbit-muted hover:text-red-400 hover:bg-orbit-surface2 transition-colors"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
               <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
@@ -168,7 +168,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
               </div>
             ) : historyError ? (
               <div className="flex flex-col items-center justify-center h-full gap-3">
-                <p className="text-neutral-500 text-sm">메시지를 불러오지 못했습니다.</p>
+                <p className="text-orbit-subtle text-sm">메시지를 불러오지 못했습니다.</p>
                 <button
                   onClick={onRetryHistory}
                   className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
@@ -177,32 +177,32 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                 </button>
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-neutral-500 text-sm">
+              <div className="flex items-center justify-center h-full text-orbit-subtle text-sm">
                 아직 메시지가 없습니다.
               </div>
             ) : (
               <>
                 {isLoadingMore && (
                   <div className="flex items-center justify-center py-3">
-                    <div className="w-4 h-4 border-2 border-neutral-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-orbit-muted border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
                 {!hasMore && !isLoadingMore && messages.length > 0 && (
                   <div className="flex items-center gap-2 my-2">
-                    <div className="flex-1 h-px bg-neutral-700" />
-                    <span className="text-xs text-neutral-500 flex-shrink-0">대화의 시작입니다</span>
-                    <div className="flex-1 h-px bg-neutral-700" />
+                    <div className="flex-1 h-px bg-orbit-border" />
+                    <span className="text-xs text-orbit-subtle flex-shrink-0">대화의 시작입니다</span>
+                    <div className="flex-1 h-px bg-orbit-border" />
                   </div>
                 )}
                 {messages.map((msg, idx) => (
                 <div key={msg.chatId}>
                   {showDateDividerBefore(msg, idx) && (
                     <div className="flex items-center gap-2 my-3">
-                      <div className="flex-1 h-px bg-neutral-700" />
-                      <span className="text-xs text-neutral-500 flex-shrink-0">
+                      <div className="flex-1 h-px bg-orbit-border" />
+                      <span className="text-xs text-orbit-subtle flex-shrink-0">
                         {formatDateDivider(msg.createdDate)}
                       </span>
-                      <div className="flex-1 h-px bg-neutral-700" />
+                      <div className="flex-1 h-px bg-orbit-border" />
                     </div>
                   )}
                   <div className="group">
@@ -291,15 +291,15 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
       {/* 나가기 확인 다이얼로그 */}
       {leaveConfirm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-neutral-800 rounded-2xl p-6 w-72 shadow-xl">
+          <div className="bg-orbit-elevated rounded-2xl p-6 w-72 shadow-xl">
             <p className="text-white font-medium mb-2">채팅방 나가기</p>
-            <p className="text-neutral-400 text-sm mb-6">
+            <p className="text-orbit-muted text-sm mb-6">
               채팅방을 나가면 대화 내용이 더 이상 보이지 않습니다. 나가시겠습니까?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setLeaveConfirm(false)}
-                className="flex-1 py-2 rounded-xl bg-neutral-700 hover:bg-neutral-600 text-sm text-white transition-colors"
+                className="flex-1 py-2 rounded-xl bg-orbit-surface2 hover:bg-orbit-elevated text-sm text-white transition-colors"
               >
                 취소
               </button>
