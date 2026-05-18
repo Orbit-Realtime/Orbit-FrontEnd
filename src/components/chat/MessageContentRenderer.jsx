@@ -17,9 +17,9 @@ function sanitizeHref(href) {
 }
 
 const REMARK_PLUGINS = [remarkGfm];
-const COLLAPSE_LINE_THRESHOLD = 15;
-const COLLAPSE_CHAR_THRESHOLD = 800;
-const COLLAPSED_MAX_HEIGHT = "240px";
+const COLLAPSE_LINE_THRESHOLD = 25;
+const COLLAPSE_CHAR_THRESHOLD = 1200;
+const COLLAPSED_MAX_HEIGHT = "320px";
 
 // fenced code block 전용 컴포넌트 — 언어 라벨 + copy 버튼 + syntax highlight
 function CodeBlock({ language, code }) {
