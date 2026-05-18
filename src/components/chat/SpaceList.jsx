@@ -24,7 +24,7 @@ export default function SpaceList({ spaces, spacesError, onRetry, selectedSpaceI
   }
 
   return (
-    <div className="flex flex-col overflow-y-auto">
+    <div className="flex flex-col overflow-y-auto orbit-scrollbar">
       {spaces.map((space) => (
         <SpaceItem
           key={space.chatRoomId}

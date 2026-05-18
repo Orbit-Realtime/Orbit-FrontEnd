@@ -89,7 +89,7 @@ export default function MemberPanel({ spaceId, onClose }) {
       {/* 콘텐츠 */}
       {showInvite ? (
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto orbit-scrollbar">
             {invitableMembers.length === 0 ? (
               <p className="text-orbit-subtle text-sm text-center py-8">
                 초대할 수 있는 멤버가 없습니다.
@@ -135,7 +135,7 @@ export default function MemberPanel({ spaceId, onClose }) {
         </div>
       ) : (
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto orbit-scrollbar">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />

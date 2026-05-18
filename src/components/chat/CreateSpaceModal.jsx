@@ -103,7 +103,7 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
         </div>
 
         {/* 멤버 목록 */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto orbit-scrollbar min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />

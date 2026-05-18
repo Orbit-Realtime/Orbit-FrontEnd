@@ -160,7 +160,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="h-full overflow-y-auto px-4 py-4 flex flex-col gap-2"
+            className="h-full overflow-y-auto orbit-scrollbar px-4 py-4 flex flex-col gap-2"
           >
             {loading ? (
               <div className="flex items-center justify-center h-full">

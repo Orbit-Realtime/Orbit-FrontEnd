@@ -74,6 +74,11 @@ code {
 @layer utilities {
 
   /* 스크롤바: 스크롤 영역에 적용할 utility class */
+  .orbit-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #617089 transparent;
+  }
+
   .orbit-scrollbar::-webkit-scrollbar {
     width: 4px;
   }

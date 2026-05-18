@@ -7,7 +7,7 @@ export default function SpaceItem({ space, isSelected, onClick }) {
     <div
       onClick={onClick}
       className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-l-2
-        ${isSelected ? "bg-orbit-surface2 border-orbit-cyan" : "border-transparent hover:bg-orbit-surface"}`}
+        ${isSelected ? "bg-orbit-surface2 border-orbit-cyan" : "border-transparent hover:bg-orbit-surface2"}`}
     >
       {/* 아바타 */}
       <div className="w-12 h-12 rounded-full bg-orbit-elevated flex-shrink-0 flex items-center justify-center text-orbit-cyan font-bold text-lg select-none">
