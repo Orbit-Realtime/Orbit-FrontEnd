@@ -69,14 +69,14 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-neutral-800 rounded-2xl w-96 max-h-[80vh] flex flex-col shadow-xl">
+      <div className="bg-orbit-elevated rounded-2xl w-96 max-h-[80vh] flex flex-col shadow-xl">
 
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-700 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-orbit-border flex-shrink-0">
           <span className="font-semibold text-white">New Space</span>
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-white transition-colors"
+            className="text-orbit-muted hover:text-white transition-colors"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
@@ -85,19 +85,19 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
         </div>
 
         {/* Space 이름 입력 */}
-        <div className="px-6 py-4 border-b border-neutral-700 flex-shrink-0">
+        <div className="px-6 py-4 border-b border-orbit-border flex-shrink-0">
           <input
             value={spaceName}
             onChange={(e) => setSpaceName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
             placeholder="Space name (optional)"
-            className="w-full bg-neutral-700 text-white text-sm px-3 py-2.5 rounded-xl outline-none placeholder-neutral-500 border border-transparent focus:border-neutral-500 transition-colors"
+            className="w-full bg-orbit-surface2 text-white text-sm px-3 py-2.5 rounded-xl outline-none placeholder-orbit-subtle border border-orbit-border focus:border-orbit-border-strong transition-colors"
           />
         </div>
 
         {/* Members 라벨 */}
         <div className="px-6 py-3 flex-shrink-0">
-          <span className="text-xs text-neutral-400 font-medium uppercase tracking-wide">
+          <span className="text-xs text-orbit-muted font-medium uppercase tracking-wide">
             Add members
           </span>
         </div>
@@ -110,7 +110,7 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
             </div>
           ) : membersError ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <p className="text-neutral-500 text-sm">멤버 목록을 불러오지 못했습니다.</p>
+              <p className="text-orbit-subtle text-sm">멤버 목록을 불러오지 못했습니다.</p>
               <button
                 onClick={loadMembers}
                 className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
@@ -120,7 +120,7 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
             </div>
           ) : members.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <p className="text-neutral-500 text-sm">초대할 수 있는 멤버가 없습니다.</p>
+              <p className="text-orbit-subtle text-sm">초대할 수 있는 멤버가 없습니다.</p>
             </div>
           ) : (
             members.map((member) => {
@@ -129,11 +129,11 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
                 <button
                   key={member.memberId}
                   onClick={() => toggleSelect(member.memberId)}
-                  className={`w-full flex items-center gap-3 px-6 py-3 hover:bg-neutral-700 transition-colors text-left ${
-                    selected ? "bg-neutral-700/60" : ""
+                  className={`w-full flex items-center gap-3 px-6 py-3 hover:bg-orbit-surface2 transition-colors text-left ${
+                    selected ? "bg-orbit-surface2/60" : ""
                   }`}
                 >
-                  <div className="w-9 h-9 rounded-full bg-neutral-600 flex items-center justify-center flex-shrink-0 text-sm font-medium text-white select-none">
+                  <div className="w-9 h-9 rounded-full bg-orbit-surface2 flex items-center justify-center flex-shrink-0 text-sm font-medium text-white select-none">
                     {member.nickname[0].toUpperCase()}
                   </div>
                   <span className="text-sm text-white flex-1 truncate">{member.nickname}</span>
@@ -152,11 +152,11 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
 
         {/* 생성 버튼 */}
         {selectedIds.size > 0 && (
-          <div className="flex-shrink-0 px-6 py-4 border-t border-neutral-700">
+          <div className="flex-shrink-0 px-6 py-4 border-t border-orbit-border">
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="w-full py-2.5 bg-blue-500 hover:bg-blue-400 disabled:bg-neutral-600 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
+              className="w-full py-2.5 bg-blue-500 hover:bg-blue-400 disabled:bg-orbit-surface2 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
             >
               {creating ? "생성 중..." : `Create Space (${selectedIds.size}명)`}
             </button>
