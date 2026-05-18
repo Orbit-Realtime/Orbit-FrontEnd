@@ -40,7 +40,12 @@ function CodeBlock({ language, code }) {
     <div className="my-1.5 rounded overflow-hidden text-xs border border-orbit-border">
       {/* header: 언어 라벨 + copy 버튼 */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#21252b] select-none">
-        <span className="font-mono text-orbit-muted">{language || "text"}</span>
+        <span className="font-mono text-orbit-muted">
+          {language || "text"}
+          {isLong && (
+            <span className="ml-2 text-orbit-subtle">{lineCount}줄</span>
+          )}
+        </span>
         <button
           onClick={handleCopy}
           className="text-orbit-muted hover:text-white text-xs transition-colors"
