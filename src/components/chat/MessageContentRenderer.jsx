@@ -116,7 +116,7 @@ const markdownComponents = {
       return <code className={className} {...props}>{children}</code>;
     }
     return (
-      <code className="bg-black/20 rounded px-1 py-0.5 font-mono text-xs" {...props}>
+      <code className="bg-white/[0.08] border border-white/[0.12] rounded px-1 py-0.5 font-mono text-xs" {...props}>
         {children}
       </code>
     );
