@@ -414,7 +414,7 @@ export default function ChatPage() {
               }}
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-neutral-500">
+            <div className="flex items-center justify-center h-full text-orbit-subtle">
               대화를 선택하세요.
             </div>
           )}

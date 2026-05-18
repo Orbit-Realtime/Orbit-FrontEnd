@@ -245,7 +245,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
           {newMessageCount > 0 && (
             <button
               onClick={scrollToBottom}
-              className="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-400 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg transition-colors flex items-center gap-1.5"
+              className="absolute bottom-4 right-4 bg-orbit-cyan hover:bg-orbit-cyan/80 text-orbit-bg text-xs font-medium px-3 py-2 rounded-full shadow-lg transition-colors flex items-center gap-1.5"
             >
               새 메시지 {newMessageCount}개
               <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current">
