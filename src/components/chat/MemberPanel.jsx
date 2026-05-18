@@ -110,8 +110,8 @@ export default function MemberPanel({ spaceId, onClose }) {
                     </div>
                     <span className="text-sm text-white flex-1 truncate">{member.nickname}</span>
                     {selected && (
-                      <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                        <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white">
+                      <div className="w-4 h-4 rounded-full bg-orbit-cyan flex items-center justify-center flex-shrink-0">
+                        <svg viewBox="0 0 24 24" className="w-3 h-3 fill-orbit-bg">
                           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                         </svg>
                       </div>
@@ -126,7 +126,7 @@ export default function MemberPanel({ spaceId, onClose }) {
               <button
                 onClick={handleInvite}
                 disabled={inviting}
-                className="w-full py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-orbit-surface2 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
+                className="w-full py-2 bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-surface2 disabled:text-orbit-muted disabled:cursor-not-allowed rounded-xl text-sm font-medium text-orbit-bg transition-colors"
               >
                 {inviting ? "초대 중..." : `초대 (${selectedIds.size}명)`}
               </button>
@@ -138,7 +138,7 @@ export default function MemberPanel({ spaceId, onClose }) {
           <div className="flex-1 overflow-y-auto orbit-scrollbar">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-orbit-muted border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
               members.map((member) => (

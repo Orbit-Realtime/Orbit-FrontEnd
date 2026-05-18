@@ -106,14 +106,14 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
         <div className="flex-1 overflow-y-auto orbit-scrollbar min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-orbit-muted border-t-transparent rounded-full animate-spin" />
             </div>
           ) : membersError ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <p className="text-orbit-subtle text-sm">멤버 목록을 불러오지 못했습니다.</p>
               <button
                 onClick={loadMembers}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-xs text-orbit-cyan hover:text-orbit-text transition-colors"
               >
                 다시 시도
               </button>
@@ -138,8 +138,8 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
                   </div>
                   <span className="text-sm text-white flex-1 truncate">{member.nickname}</span>
                   {selected && (
-                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white">
+                    <div className="w-5 h-5 rounded-full bg-orbit-cyan flex items-center justify-center flex-shrink-0">
+                      <svg viewBox="0 0 24 24" className="w-3 h-3 fill-orbit-bg">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                       </svg>
                     </div>
@@ -156,7 +156,7 @@ export default function CreateSpaceModal({ onCreated, onClose }) {
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="w-full py-2.5 bg-blue-500 hover:bg-blue-400 disabled:bg-orbit-surface2 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
+              className="w-full py-2.5 bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-surface2 disabled:text-orbit-muted disabled:cursor-not-allowed rounded-xl text-sm font-medium text-orbit-bg transition-colors"
             >
               {creating ? "생성 중..." : `Create Space (${selectedIds.size}명)`}
             </button>

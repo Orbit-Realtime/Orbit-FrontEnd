@@ -164,14 +164,14 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
           >
             {loading ? (
               <div className="flex items-center justify-center h-full">
-                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-orbit-muted border-t-transparent rounded-full animate-spin" />
               </div>
             ) : historyError ? (
               <div className="flex flex-col items-center justify-center h-full gap-3">
                 <p className="text-orbit-subtle text-sm">메시지를 불러오지 못했습니다.</p>
                 <button
                   onClick={onRetryHistory}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-xs text-orbit-cyan hover:text-orbit-text transition-colors"
                 >
                   다시 시도
                 </button>

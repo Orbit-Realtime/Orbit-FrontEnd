@@ -101,7 +101,7 @@ export default function ChangePasswordModal({ onClose }) {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-1 w-full py-2.5 bg-blue-500 hover:bg-blue-400 disabled:bg-orbit-surface2 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
+            className="mt-1 w-full py-2.5 bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-surface2 disabled:text-orbit-muted disabled:cursor-not-allowed rounded-xl text-sm font-medium text-orbit-bg transition-colors"
           >
             {submitting ? "변경 중..." : "변경"}
           </button>

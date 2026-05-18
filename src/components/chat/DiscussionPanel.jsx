@@ -162,7 +162,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
     >
       {/* Resize handle */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-1.5 z-10 cursor-col-resize hover:bg-blue-500/30 transition-colors"
+        className="absolute left-0 top-0 bottom-0 w-1.5 z-10 cursor-col-resize hover:bg-orbit-cyan/20 transition-colors"
         onMouseDown={handleResizeStart}
       />
 
@@ -196,7 +196,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
         {status === "loading" && (
           <div className="flex items-center justify-center flex-1">
-            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-orbit-muted border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
@@ -214,7 +214,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="w-full py-2 bg-blue-500 hover:bg-blue-400 disabled:bg-orbit-surface2 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
+              className="w-full py-2 bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-surface2 disabled:text-orbit-muted disabled:cursor-not-allowed rounded-xl text-sm font-medium text-orbit-bg transition-colors"
             >
               {creating ? "생성 중..." : "Start Discussion"}
             </button>
@@ -229,7 +229,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
             <p className="text-orbit-subtle text-sm text-center">불러오지 못했습니다.</p>
             <button
               onClick={loadDiscussion}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              className="text-xs text-orbit-cyan hover:text-orbit-text transition-colors"
             >
               다시 시도
             </button>
@@ -243,7 +243,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
             <div className="flex-1 flex flex-col overflow-hidden">
               {messagesLoading && (
                 <div className="flex items-center justify-center flex-1">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-orbit-muted border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
 
@@ -262,7 +262,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
                           setMessagesLoading(false);
                         });
                     }}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    className="text-xs text-orbit-cyan hover:text-orbit-text transition-colors"
                   >
                     다시 시도
                   </button>
