@@ -157,7 +157,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
   return (
     <div
-      className="relative border-l border-orbit-border flex flex-col flex-shrink-0 bg-orbit-sidebar"
+      className="relative border-l border-orbit-border flex flex-col flex-shrink-0 bg-orbit-sidebar orbit-panel-bg"
       style={{ width: `${width}px` }}
     >
       {/* Resize handle */}

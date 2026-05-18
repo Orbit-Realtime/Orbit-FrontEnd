@@ -51,6 +51,24 @@ code {
     box-shadow: 0 0 16px rgba(67, 217, 255, 0.18);
   }
 
+  /* Sidebar ambient: root workspace 좌상단 cyan glow 연속성 재현 */
+  .orbit-sidebar-bg {
+    background-image: radial-gradient(
+      ellipse 120% 40% at 80% 5%,
+      rgba(67, 217, 255, 0.030) 0%,
+      transparent 70%
+    );
+  }
+
+  /* Panel ambient: discussion/member panel 상단 crown ambient */
+  .orbit-panel-bg {
+    background-image: radial-gradient(
+      ellipse 120% 35% at 50% 0%,
+      rgba(67, 217, 255, 0.025) 0%,
+      transparent 65%
+    );
+  }
+
 }
 
 @layer utilities {

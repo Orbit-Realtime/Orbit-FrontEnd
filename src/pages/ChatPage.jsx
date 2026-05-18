@@ -358,7 +358,7 @@ export default function ChatPage() {
       <div className="flex flex-1 overflow-hidden relative z-10">
 
         {/* ── Sidebar ── */}
-        <div className="flex flex-col w-64 border-r border-orbit-border bg-orbit-sidebar flex-shrink-0 relative z-10">
+        <div className="flex flex-col w-64 border-r border-orbit-border bg-orbit-sidebar orbit-sidebar-bg flex-shrink-0 relative z-10">
 
           {/* 사용자 헤더 */}
           <UserHeader connected={connected} />

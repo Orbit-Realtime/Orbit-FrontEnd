@@ -64,7 +64,7 @@ export default function MemberPanel({ spaceId, onClose }) {
   };
 
   return (
-    <div className="w-60 border-l border-orbit-border flex flex-col flex-shrink-0 bg-orbit-sidebar">
+    <div className="w-60 border-l border-orbit-border flex flex-col flex-shrink-0 bg-orbit-sidebar orbit-panel-bg">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-orbit-border">
         <span className="text-sm font-medium text-white">
