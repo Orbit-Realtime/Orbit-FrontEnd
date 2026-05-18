@@ -175,7 +175,7 @@ const markdownComponents = {
   hr:         ({ node })                 => <hr className="border-current/20 my-2" />,
   table:      ({ node, children })       => (
     <div className="overflow-x-auto my-1">
-      <table className="border-collapse text-xs">{children}</table>
+      <table className="border-collapse text-xs min-w-max">{children}</table>
     </div>
   ),
   th:         ({ node, children })       => (
