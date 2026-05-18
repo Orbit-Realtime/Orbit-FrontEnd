@@ -25,6 +25,9 @@ module.exports = {
           glow:            'rgba(67,217,255,0.18)',
         },
       },
+      boxShadow: {
+        'card-orbit': '0 2px 6px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+      },
     },
   },
   plugins: [],

@@ -157,7 +157,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
   return (
     <div
-      className="relative border-l border-orbit-border flex flex-col flex-shrink-0 bg-orbit-bg"
+      className="relative border-l border-orbit-border flex flex-col flex-shrink-0 bg-orbit-sidebar"
       style={{ width: `${width}px` }}
     >
       {/* Resize handle */}
@@ -180,7 +180,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
       </div>
 
       {/* Root message preview */}
-      <div className="px-4 py-3 border-b border-orbit-border flex-shrink-0 bg-orbit-surface">
+      <div className="px-4 py-3 border-b border-l-2 border-orbit-border border-l-orbit-border-strong flex-shrink-0 bg-orbit-surface">
         <p className="text-xs text-orbit-secondary mb-1 font-medium">{message.senderNickname}</p>
         <p className="text-sm text-orbit-text line-clamp-3 break-words">{message.message}</p>
         <p className="text-xs text-orbit-muted mt-1">{formatMessageTime(message.createdDate)}</p>
@@ -268,7 +268,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
               )}
 
               {!messagesLoading && !messagesError && discussionMessages.length > 0 && (
-                <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-3">
+                <div className="flex-1 overflow-y-auto orbit-scrollbar py-3 px-4 flex flex-col gap-2">
                   {discussionMessages.map((dm) => (
                     <DiscussionMessageItem
                       key={dm.discussionMessageId}
@@ -281,7 +281,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
             </div>
 
             {/* 입력창 */}
-            <div className="px-3 py-3 border-t border-orbit-border flex-shrink-0">
+            <div className="px-4 py-3 border-t border-orbit-border flex-shrink-0">
               {!connected && (
                 <p className="text-xs text-red-400 mb-2 text-center">
                   연결이 끊어져 메시지를 전송할 수 없습니다.
