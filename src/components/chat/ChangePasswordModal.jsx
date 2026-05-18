@@ -45,7 +45,7 @@ export default function ChangePasswordModal({ onClose }) {
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-orbit-elevated rounded-2xl p-6 w-80 shadow-xl">
         <div className="flex items-center justify-between mb-5">
-          <p className="text-white font-medium">비밀번호 변경</p>
+          <p className="text-orbit-text font-medium">비밀번호 변경</p>
           <button
             onClick={onClose}
             className="text-orbit-muted hover:text-white transition-colors"
@@ -65,7 +65,7 @@ export default function ChangePasswordModal({ onClose }) {
               value={form.currentPassword}
               onChange={handleChange}
               autoComplete="current-password"
-              className="w-full bg-orbit-surface2 text-white text-sm px-3 py-2 rounded-xl outline-none border border-orbit-border focus:border-orbit-border-strong placeholder-orbit-subtle"
+              className="w-full bg-orbit-surface2 text-orbit-text text-sm px-3 py-2 rounded-xl outline-none border border-orbit-border focus:border-orbit-border-strong placeholder-orbit-subtle"
               placeholder="현재 비밀번호"
             />
           </div>
@@ -77,7 +77,7 @@ export default function ChangePasswordModal({ onClose }) {
               value={form.newPassword}
               onChange={handleChange}
               autoComplete="new-password"
-              className="w-full bg-orbit-surface2 text-white text-sm px-3 py-2 rounded-xl outline-none border border-orbit-border focus:border-orbit-border-strong placeholder-orbit-subtle"
+              className="w-full bg-orbit-surface2 text-orbit-text text-sm px-3 py-2 rounded-xl outline-none border border-orbit-border focus:border-orbit-border-strong placeholder-orbit-subtle"
               placeholder="새 비밀번호"
             />
           </div>
@@ -89,7 +89,7 @@ export default function ChangePasswordModal({ onClose }) {
               value={form.confirmPassword}
               onChange={handleChange}
               autoComplete="new-password"
-              className="w-full bg-orbit-surface2 text-white text-sm px-3 py-2 rounded-xl outline-none border border-orbit-border focus:border-orbit-border-strong placeholder-orbit-subtle"
+              className="w-full bg-orbit-surface2 text-orbit-text text-sm px-3 py-2 rounded-xl outline-none border border-orbit-border focus:border-orbit-border-strong placeholder-orbit-subtle"
               placeholder="새 비밀번호 확인"
             />
           </div>

@@ -72,7 +72,7 @@ export default function MemberPanel({ spaceId, onClose }) {
         </span>
         <button
           onClick={showInvite ? () => setShowInvite(false) : onClose}
-          className="text-orbit-muted hover:text-white transition-colors"
+          className="text-orbit-muted hover:text-orbit-text transition-colors"
         >
           {showInvite ? (
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
@@ -105,10 +105,10 @@ export default function MemberPanel({ spaceId, onClose }) {
                       selected ? "bg-orbit-surface2/60" : ""
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-orbit-elevated flex items-center justify-center flex-shrink-0 text-xs font-medium text-white">
+                    <div className="w-8 h-8 rounded-full bg-orbit-elevated flex items-center justify-center flex-shrink-0 text-xs font-medium text-orbit-text">
                       {member.nickname[0].toUpperCase()}
                     </div>
-                    <span className="text-sm text-white flex-1 truncate">{member.nickname}</span>
+                    <span className="text-sm text-orbit-text flex-1 truncate">{member.nickname}</span>
                     {selected && (
                       <div className="w-4 h-4 rounded-full bg-orbit-cyan flex items-center justify-center flex-shrink-0">
                         <svg viewBox="0 0 24 24" className="w-3 h-3 fill-orbit-bg">
@@ -146,10 +146,10 @@ export default function MemberPanel({ spaceId, onClose }) {
                   key={member.memberId}
                   className="flex items-center gap-3 px-4 py-3"
                 >
-                  <div className="w-8 h-8 rounded-full bg-orbit-elevated flex items-center justify-center flex-shrink-0 text-xs font-medium text-white">
+                  <div className="w-8 h-8 rounded-full bg-orbit-elevated flex items-center justify-center flex-shrink-0 text-xs font-medium text-orbit-text">
                     {member.nickname[0].toUpperCase()}
                   </div>
-                  <span className="text-sm text-white flex-1 truncate">{member.nickname}</span>
+                  <span className="text-sm text-orbit-text flex-1 truncate">{member.nickname}</span>
                   {member.memberId === auth?.memberId && (
                     <span className="text-xs text-orbit-subtle flex-shrink-0">나</span>
                   )}

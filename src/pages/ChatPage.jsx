@@ -289,7 +289,7 @@ export default function ChatPage() {
   }, [refreshSpaces, handleSelectSpace]);
 
   return (
-    <div className="orbit-workspace relative flex flex-col h-screen text-white overflow-hidden">
+    <div className="orbit-workspace relative flex flex-col h-screen text-orbit-text overflow-hidden">
       {/* ── Background overlays ── */}
       <div className="orbit-vignette" aria-hidden="true" />
       <div className="orbit-arc-overlay" aria-hidden="true">

@@ -123,7 +123,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
           ) : (
             <button
               onClick={startEditTitle}
-              className="flex-1 text-left font-bold text-white hover:text-orbit-secondary transition-colors truncate"
+              className="flex-1 text-left font-bold text-orbit-text hover:text-orbit-secondary transition-colors truncate"
               title="클릭하여 이름 변경"
             >
               {space?.title ?? ""}
@@ -292,7 +292,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
       {leaveConfirm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="bg-orbit-elevated rounded-2xl p-6 w-72 shadow-xl">
-            <p className="text-white font-medium mb-2">채팅방 나가기</p>
+            <p className="text-orbit-text font-medium mb-2">채팅방 나가기</p>
             <p className="text-orbit-muted text-sm mb-6">
               채팅방을 나가면 대화 내용이 더 이상 보이지 않습니다. 나가시겠습니까?
             </p>
