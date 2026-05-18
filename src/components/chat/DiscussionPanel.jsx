@@ -168,7 +168,12 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-orbit-border flex-shrink-0">
-        <span className="text-sm font-medium text-white">Discussion</span>
+        <div className="flex items-center gap-1.5">
+          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current text-orbit-muted flex-shrink-0">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+          </svg>
+          <span className="text-sm font-medium text-orbit-secondary">Discussion</span>
+        </div>
         <button
           onClick={onClose}
           className="text-orbit-muted hover:text-white transition-colors"
@@ -180,10 +185,10 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
       </div>
 
       {/* Root message preview */}
-      <div className="px-4 py-3 border-b border-l-2 border-orbit-border border-l-orbit-border-strong flex-shrink-0 bg-orbit-surface">
-        <p className="text-xs text-orbit-secondary mb-1 font-medium">{message.senderNickname}</p>
+      <div className="px-4 py-3 border-b border-l-2 border-orbit-border border-l-orbit-border-strong flex-shrink-0 bg-orbit-surface2">
+        <p className="text-xs text-orbit-muted mb-1 font-medium uppercase tracking-wide">{message.senderNickname}</p>
         <p className="text-sm text-orbit-text line-clamp-3 break-words">{message.message}</p>
-        <p className="text-xs text-orbit-muted mt-1">{formatMessageTime(message.createdDate)}</p>
+        <p className="text-xs text-orbit-subtle mt-1.5">{formatMessageTime(message.createdDate)}</p>
       </div>
 
       {/* 콘텐츠 */}
@@ -197,8 +202,11 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
 
         {status === "not_found" && (
           <div className="flex flex-col items-center justify-center flex-1 gap-4 px-4">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 fill-current text-orbit-muted/30">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+            </svg>
             <div className="text-center">
-              <p className="text-orbit-secondary text-sm font-medium mb-1">Discussion 없음</p>
+              <p className="text-orbit-muted text-sm font-medium mb-1">Discussion 없음</p>
               <p className="text-orbit-subtle text-xs">
                 이 메시지에 대한 Discussion을 시작하세요.
               </p>
@@ -287,7 +295,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
                   연결이 끊어져 메시지를 전송할 수 없습니다.
                 </p>
               )}
-              <div className="flex gap-2">
+              <div className="flex items-end gap-2 bg-orbit-surface2 rounded-xl border border-orbit-border focus-within:border-orbit-border-strong px-4 py-2.5">
                 <textarea
                   rows={1}
                   value={inputContent}
@@ -297,14 +305,16 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
                   onCompositionEnd={() => { isComposingRef.current = false; }}
                   placeholder={connected ? "메시지 입력..." : "연결 중..."}
                   disabled={!connected}
-                  className="orbit-input flex-1 min-w-0"
+                  className="flex-1 min-w-0 bg-transparent text-orbit-text text-sm placeholder:text-orbit-subtle outline-none resize-none max-h-28 leading-5 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!inputContent.trim() || !connected}
-                  className="flex-shrink-0 px-3 py-2 bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-elevated text-orbit-bg disabled:text-orbit-muted disabled:cursor-not-allowed rounded-lg text-sm transition-colors"
+                  className="flex-shrink-0 w-8 h-8 rounded-lg bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-elevated text-orbit-bg disabled:text-orbit-muted disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                 >
-                  전송
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current rotate-90">
+                    <path d="M2 21L23 12 2 3v7l15 2-15 2v7z" />
+                  </svg>
                 </button>
               </div>
             </div>
