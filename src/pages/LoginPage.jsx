@@ -42,9 +42,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-900">
-      <div className="w-80 flex flex-col gap-4">
-        <h1 className="text-2xl font-bold text-white text-center mb-2">
+    <div className="min-h-screen flex flex-col items-center justify-center orbit-workspace">
+      <div className="w-80 flex flex-col gap-4 bg-orbit-elevated rounded-2xl p-8 orbit-panel-bg">
+        <h1 className="text-xl font-semibold text-orbit-text text-center mb-4">
           로그인
         </h1>
 
@@ -55,7 +55,7 @@ export default function LoginPage() {
           value={form.username}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          className="w-full px-4 py-3 bg-neutral-800 text-white rounded-lg border border-neutral-700 outline-none focus:border-blue-500 placeholder-neutral-500"
+          className="orbit-input w-full px-4 py-3"
         />
 
         <input
@@ -65,7 +65,7 @@ export default function LoginPage() {
           value={form.password}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          className="w-full px-4 py-3 bg-neutral-800 text-white rounded-lg border border-neutral-700 outline-none focus:border-blue-500 placeholder-neutral-500"
+          className="orbit-input w-full px-4 py-3"
         />
 
         {error && (
@@ -75,14 +75,14 @@ export default function LoginPage() {
         <button
           onClick={handleLogin}
           disabled={loading}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+          className="w-full py-3 bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-elevated disabled:text-orbit-muted disabled:cursor-not-allowed text-orbit-bg font-semibold rounded-lg transition-colors"
         >
           {loading ? "로그인 중..." : "로그인"}
         </button>
 
         <Link
           to="/signup"
-          className="text-center text-neutral-400 hover:text-white text-sm transition-colors"
+          className="text-center text-orbit-muted hover:text-orbit-text text-sm transition-colors"
         >
           계정이 없으신가요? 회원가입
         </Link>
