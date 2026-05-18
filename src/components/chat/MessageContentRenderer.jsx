@@ -163,7 +163,7 @@ const markdownComponents = {
     );
   },
   blockquote: ({ node, children })       => (
-    <blockquote className="border-l-2 border-current/50 pl-2 my-1 opacity-80">
+    <blockquote className="border-l-2 border-orbit-secondary/50 pl-2 my-1 text-orbit-secondary">
       {children}
     </blockquote>
   ),

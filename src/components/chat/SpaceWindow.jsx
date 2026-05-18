@@ -299,7 +299,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
             <div className="flex gap-3">
               <button
                 onClick={() => setLeaveConfirm(false)}
-                className="flex-1 py-2 rounded-xl bg-orbit-surface2 hover:bg-orbit-elevated text-sm text-white transition-colors"
+                className="flex-1 py-2 rounded-xl bg-orbit-surface2 hover:bg-orbit-elevated text-sm text-orbit-text transition-colors"
               >
                 취소
               </button>

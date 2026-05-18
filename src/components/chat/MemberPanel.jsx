@@ -67,7 +67,7 @@ export default function MemberPanel({ spaceId, onClose }) {
     <div className="w-60 border-l border-orbit-border flex flex-col flex-shrink-0 bg-orbit-sidebar orbit-panel-bg">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-orbit-border">
-        <span className="text-sm font-medium text-white">
+        <span className="text-sm font-medium text-orbit-text">
           {showInvite ? "멤버 초대" : `멤버 ${members.length}명`}
         </span>
         <button
@@ -160,7 +160,7 @@ export default function MemberPanel({ spaceId, onClose }) {
           <div className="flex-shrink-0 px-4 py-3 border-t border-orbit-border">
             <button
               onClick={openInvite}
-              className="w-full py-2 bg-orbit-surface2 hover:bg-orbit-elevated rounded-xl text-sm text-white transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2 bg-orbit-surface2 hover:bg-orbit-elevated rounded-xl text-sm text-orbit-text transition-colors flex items-center justify-center gap-2"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
