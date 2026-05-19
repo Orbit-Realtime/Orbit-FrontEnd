@@ -133,6 +133,7 @@ export default function ChatPage() {
 
           memberLastReadRef.current = {};
           setMessages([]);
+          setIsLoadingMore(false);
           setHistoryLoading(true);
           setHistoryError(false);
           const fetchId = ++historyFetchIdRef.current;
