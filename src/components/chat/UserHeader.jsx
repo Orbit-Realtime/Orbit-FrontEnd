@@ -43,7 +43,7 @@ export default function UserHeader({ connected }) {
 
   return (
     <>
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-orbit-border flex-shrink-0">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-orbit-border flex-shrink-0">
         <div className="flex-1 min-w-0">
           {isEditingNickname ? (
             <input
@@ -63,8 +63,9 @@ export default function UserHeader({ connected }) {
               {auth?.nickname}
             </button>
           )}
-          <p className="text-xs text-orbit-subtle mt-0.5">
-            {connected ? "🟢 온라인" : "🔴 오프라인"}
+          <p className="flex items-center gap-1 text-xs text-orbit-subtle">
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${connected ? "bg-orbit-cyan/70" : "bg-orbit-border"}`} />
+            {connected ? "온라인" : "오프라인"}
           </p>
         </div>
         <button

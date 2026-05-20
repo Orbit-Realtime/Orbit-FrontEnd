@@ -262,7 +262,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
               연결이 끊어져 메시지를 전송할 수 없습니다.
             </p>
           )}
-          <div className="flex items-end gap-2 bg-orbit-surface2 rounded-xl border border-orbit-border focus-within:border-orbit-border-strong px-4 py-2.5">
+          <div className="flex items-center gap-2 bg-orbit-surface2 rounded-xl border border-orbit-border focus-within:border-orbit-border-strong px-4 py-2.5">
             <textarea
               ref={textareaRef}
               value={text}
@@ -280,7 +280,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
               disabled={!text.trim() || !connected}
               className="flex-shrink-0 w-8 h-8 rounded-lg bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-elevated text-orbit-bg disabled:text-orbit-muted disabled:cursor-not-allowed transition-colors flex items-center justify-center"
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current rotate-90">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current -rotate-90">
                 <path d="M2 21L23 12 2 3v7l15 2-15 2v7z" />
               </svg>
             </button>
