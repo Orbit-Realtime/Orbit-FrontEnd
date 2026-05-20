@@ -213,15 +213,27 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                     />
                     {onOpenDiscussion && (
                       <div className={`mt-0.5 flex ${msg.senderId === auth?.memberId ? "justify-end" : "justify-start"}`}>
-                        <button
-                          onClick={() => onOpenDiscussion(msg)}
-                          className="opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-opacity duration-150 flex items-center gap-1 px-2 py-0.5 rounded-md text-xs text-orbit-subtle hover:text-orbit-cyan hover:bg-orbit-surface2 border border-transparent hover:border-orbit-border"
-                        >
-                          <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current flex-shrink-0">
-                            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
-                          </svg>
-                          Discussion
-                        </button>
+                        {msg.discussionId && msg.discussionMessageCount > 0 ? (
+                          <button
+                            onClick={() => onOpenDiscussion(msg)}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-orbit-cyan/70 hover:text-orbit-cyan bg-orbit-surface/60 hover:bg-orbit-surface2 border border-orbit-border/50 hover:border-orbit-border transition-colors"
+                          >
+                            <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current flex-shrink-0">
+                              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+                            </svg>
+                            Discussion · {msg.discussionMessageCount} {msg.discussionMessageCount === 1 ? "reply" : "replies"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => onOpenDiscussion(msg)}
+                            className="opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-opacity duration-150 flex items-center gap-1 px-2 py-0.5 rounded-md text-xs text-orbit-subtle hover:text-orbit-cyan hover:bg-orbit-surface2 border border-transparent hover:border-orbit-border"
+                          >
+                            <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current flex-shrink-0">
+                              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+                            </svg>
+                            Discussion
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
