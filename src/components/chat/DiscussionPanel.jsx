@@ -29,6 +29,8 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
   const isComposingRef = useRef(false);
   // reconnect 감지용: null=초기 마운트, false=단절, true=연결
   const prevConnectedRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const shouldScrollRef = useRef(false);
 
   const loadDiscussion = useCallback(() => {
     setStatus("loading");
@@ -83,8 +85,11 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
     if (toAppend.length === 0) return;
 
     toAppend.forEach((e) => processedMessageIdsRef.current.add(e.discussionMessageId));
+    if (toAppend.some((e) => e.senderId === auth.memberId)) {
+      shouldScrollRef.current = true;
+    }
     setDiscussionMessages((prev) => [...prev, ...toAppend]);
-  }, [incomingDiscussionEvents, discussionId, onConsumeDiscussionEvents]);
+  }, [incomingDiscussionEvents, discussionId, onConsumeDiscussionEvents, auth.memberId]);
 
   useEffect(() => {
     if (!discussionId) {
@@ -104,6 +109,13 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
         setMessagesLoading(false);
       });
   }, [discussionId, syncDiscussionMessages]);
+
+  useEffect(() => {
+    if (!shouldScrollRef.current) return;
+    shouldScrollRef.current = false;
+    const el = scrollContainerRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [discussionMessages]);
 
   // reconnect 감지: status=loaded + discussionId 확정 상태에서만 re-sync 허용.
   // 조회 중·not_found·error·생성 중 상태에서는 실행하지 않는다.
@@ -276,7 +288,7 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
               )}
 
               {!messagesLoading && !messagesError && discussionMessages.length > 0 && (
-                <div className="flex-1 overflow-y-auto orbit-scrollbar py-3 px-4 flex flex-col gap-2">
+                <div ref={scrollContainerRef} className="flex-1 overflow-y-auto orbit-scrollbar py-3 px-4 flex flex-col gap-2">
                   {discussionMessages.map((dm) => (
                     <DiscussionMessageItem
                       key={dm.discussionMessageId}

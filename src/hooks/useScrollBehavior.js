@@ -7,6 +7,7 @@ export default function useScrollBehavior({
   isLoadingMore,
   hasMore,
   onLoadMore,
+  currentUserId,
 }) {
   const scrollContainerRef = useRef(null);
   const bottomRef = useRef(null);
@@ -62,9 +63,16 @@ export default function useScrollBehavior({
       }
     } else if (messages.length > prevMessagesLengthRef.current) {
       const newCount = messages.length - prevMessagesLengthRef.current;
+      const newMessages = messages.slice(prevMessagesLengthRef.current);
+      const isMySent =
+        currentUserId != null &&
+        newMessages.some((m) => m.senderId === currentUserId);
       prevMessagesLengthRef.current = messages.length;
       if (!isLoadingMoreRef.current) {
-        if (checkIsAtBottom()) {
+        if (isMySent) {
+          bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+          setNewMessageCount(0);
+        } else if (checkIsAtBottom()) {
           bottomRef.current?.scrollIntoView({ behavior: "smooth" });
         } else {
           setNewMessageCount((prev) => prev + newCount);

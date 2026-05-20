@@ -20,7 +20,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
     newMessageCount,
     handleScroll,
     scrollToBottom,
-  } = useScrollBehavior({ messages, loading, lastReadMessageId, isLoadingMore, hasMore, onLoadMore });
+  } = useScrollBehavior({ messages, loading, lastReadMessageId, isLoadingMore, hasMore, onLoadMore, currentUserId: auth?.memberId });
 
   // 방이 바뀌면 편집 상태 초기화
   useEffect(() => {

@@ -31,6 +31,7 @@ export function useWebSocket(onMessage, onConnected) {
 
     socket.onopen = () => {
       setConnected(true);
+      window.__orbitSocket = socket;
       setReconnecting(false);
       reconnectCountRef.current = 0;
       // 연결(재연결) 완료 시 콜백 호출
