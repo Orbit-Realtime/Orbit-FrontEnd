@@ -4,6 +4,7 @@ import { getDiscussion, createDiscussion, getDiscussionMessages } from "../../ap
 import { formatMessageTime } from "../../utils/formatTime";
 import { useAuth } from "../../context/AuthContext";
 import DiscussionMessageItem from "./DiscussionMessageItem";
+import MessageContentRenderer from "./MessageContentRenderer";
 
 export default function DiscussionPanel({ message, onClose, incomingDiscussionEvents, onConsumeDiscussionEvents, sendDiscussionMessage, connected }) {
   const { auth } = useAuth();
@@ -199,7 +200,9 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
       {/* Root message preview */}
       <div className="px-4 py-3 border-b border-l-2 border-orbit-border border-l-orbit-border-strong flex-shrink-0 bg-orbit-surface2">
         <p className="text-xs text-orbit-muted mb-1 font-medium uppercase tracking-wide">{message.senderNickname}</p>
-        <p className="text-sm text-orbit-text line-clamp-3 break-words">{message.message}</p>
+        <div className="max-h-32 overflow-y-auto orbit-scrollbar">
+          <MessageContentRenderer content={message.message} className="text-sm text-orbit-text" />
+        </div>
         <p className="text-xs text-orbit-subtle mt-1.5">{formatMessageTime(message.createdDate)}</p>
       </div>
 
