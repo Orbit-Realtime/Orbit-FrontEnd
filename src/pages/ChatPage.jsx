@@ -413,6 +413,7 @@ export default function ChatPage() {
                 setPanelState({ type: "discussion", message: msg });
                 clearDiscussionEvents();
               }}
+              activeDiscussionChatId={panelState?.type === "discussion" ? panelState.message.chatId : null}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-orbit-subtle">

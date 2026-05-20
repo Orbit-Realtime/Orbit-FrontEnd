@@ -4,7 +4,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion }) {
+export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -194,7 +194,9 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                     <div className="flex-1 h-px bg-orbit-border" />
                   </div>
                 )}
-                {messages.map((msg, idx) => (
+                {messages.map((msg, idx) => {
+                  const isActiveDiscussion = msg.chatId === activeDiscussionChatId;
+                  return (
                 <div key={msg.chatId}>
                   {showDateDividerBefore(msg, idx) && (
                     <div className="flex items-center gap-2 my-3">
@@ -216,8 +218,13 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                         {msg.discussionId && msg.discussionMessageCount > 0 ? (
                           <button
                             onClick={() => onOpenDiscussion(msg)}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-orbit-cyan/70 hover:text-orbit-cyan bg-orbit-surface/60 hover:bg-orbit-surface2 border border-orbit-border/50 hover:border-orbit-border transition-colors"
+                            className={isActiveDiscussion
+                              ? "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-orbit-cyan bg-orbit-cyan/[0.08] border border-orbit-cyan/70 shadow-[0_0_0_1px_rgba(67,217,255,0.18),0_0_12px_rgba(67,217,255,0.08)] transition-colors"
+                              : "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-orbit-cyan/70 hover:text-orbit-cyan bg-orbit-surface/60 hover:bg-orbit-surface2 border border-orbit-border/50 hover:border-orbit-border transition-colors"}
                           >
+                            {isActiveDiscussion && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-orbit-cyan/80 flex-shrink-0" />
+                            )}
                             <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current flex-shrink-0">
                               <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
                             </svg>
@@ -247,7 +254,8 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                     </div>
                   )}
                 </div>
-                ))}
+                  );
+                })}
               </>
             )}
             <div ref={bottomRef} />

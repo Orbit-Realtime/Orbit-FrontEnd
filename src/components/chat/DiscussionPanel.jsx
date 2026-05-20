@@ -198,12 +198,18 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
       </div>
 
       {/* Root message preview */}
-      <div className="px-4 py-3 border-b border-l-2 border-orbit-border border-l-orbit-border-strong flex-shrink-0 bg-orbit-surface2">
-        <p className="text-xs text-orbit-muted mb-1 font-medium uppercase tracking-wide">{message.senderNickname}</p>
-        <div className="max-h-32 overflow-y-auto orbit-scrollbar">
-          <MessageContentRenderer content={message.message} className="text-sm text-orbit-text" />
+      <div className="px-4 pt-2.5 pb-3 border-b border-orbit-border flex-shrink-0">
+        <p className="text-[11px] text-orbit-subtle/70 mb-2 tracking-wide">Discussing</p>
+        <div className="border-l-2 border-orbit-cyan/35 pl-3">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-xs font-medium text-orbit-secondary">{message.senderNickname}</span>
+            <span className="text-orbit-border/60 text-xs select-none">·</span>
+            <span className="text-xs text-orbit-subtle">{formatMessageTime(message.createdDate)}</span>
+          </div>
+          <div className="max-h-32 overflow-y-auto orbit-scrollbar">
+            <MessageContentRenderer content={message.message} className="text-sm text-orbit-text/80" />
+          </div>
         </div>
-        <p className="text-xs text-orbit-subtle mt-1.5">{formatMessageTime(message.createdDate)}</p>
       </div>
 
       {/* 콘텐츠 */}
