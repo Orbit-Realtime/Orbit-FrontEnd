@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -20,6 +20,109 @@ const REMARK_PLUGINS = [remarkGfm];
 const COLLAPSE_LINE_THRESHOLD = 25;
 const COLLAPSE_CHAR_THRESHOLD = 1200;
 const COLLAPSED_MAX_HEIGHT = "320px";
+
+// mermaid 초기화는 최초 1회만 수행
+let mermaidInitialized = false;
+
+// mermaid fenced code block 전용 컴포넌트 — SVG 렌더링 + copy 버튼 + fallback
+function MermaidBlock({ code }) {
+  const [svg, setSvg] = useState(null);
+  const [error, setError] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const idRef = useRef(`mermaid-${Math.random().toString(36).slice(2)}`);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSvg(null);
+    setError(false);
+
+    import("mermaid")
+      .then(({ default: mermaid }) => {
+        if (!mermaidInitialized) {
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: "dark",
+            securityLevel: "strict",
+            themeVariables: {
+              background:          "#0B1525",
+              primaryColor:        "#162235",
+              primaryTextColor:    "#F3F7FF",
+              primaryBorderColor:  "rgba(255,255,255,0.12)",
+              lineColor:           "#43D9FF",
+              secondaryColor:      "#111C2E",
+              tertiaryColor:       "#07111F",
+              edgeLabelBackground: "#111C2E",
+              titleColor:          "#C7D2E4",
+              nodeBorder:          "rgba(255,255,255,0.12)",
+              mainBkg:             "#162235",
+            },
+          });
+          mermaidInitialized = true;
+        }
+        return mermaid.render(idRef.current, code);
+      })
+      .then(({ svg: rendered }) => {
+        if (!cancelled) setSvg(rendered);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      });
+
+    return () => { cancelled = true; };
+  }, [code]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div className="my-1.5 rounded overflow-hidden text-xs border border-orbit-border">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#21252b] select-none">
+        <span className="font-mono text-orbit-muted">mermaid</span>
+        <button
+          onClick={handleCopy}
+          className="inline-flex items-center gap-1 text-orbit-muted hover:text-white text-xs transition-colors"
+        >
+          {copied ? (
+            <>
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Copied!
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="2" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Copy
+            </>
+          )}
+        </button>
+      </div>
+      {svg ? (
+        <div
+          className="overflow-x-auto p-3 bg-[#0B1525]"
+          style={{ maxHeight: "480px", overflowY: "auto" }}
+          dangerouslySetInnerHTML={{ __html: svg }}
+        />
+      ) : error ? (
+        <div className="px-3 py-2 bg-[#21252b]">
+          <p className="text-red-400 mb-1.5">diagram 렌더링 실패</p>
+          <pre className="text-orbit-muted font-mono whitespace-pre-wrap break-all leading-relaxed">{code}</pre>
+        </div>
+      ) : (
+        <div className="px-3 py-4 flex items-center gap-2 text-orbit-subtle bg-[#0B1525]">
+          <div className="w-3 h-3 border border-orbit-subtle border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          Rendering diagram...
+        </div>
+      )}
+    </div>
+  );
+}
 
 // fenced code block 전용 컴포넌트 — 언어 라벨 + copy 버튼 + syntax highlight
 function CodeBlock({ language, code }) {
@@ -142,16 +245,24 @@ const markdownComponents = {
     );
   },
   // pre가 자식이 code 요소이면 CodeBlock으로 대체한다.
+  // language === "mermaid"이면 MermaidBlock으로 분기한다.
   // 언어 없는 code block도 CodeBlock으로 렌더링한다.
   pre: ({ node, children }) => {
     const child = Array.isArray(children) ? children[0] : children;
     if (child && typeof child === "object" && node?.children?.[0]?.tagName === "code") {
       const { className = "", children: code } = child.props;
       const match = /language-(\w+)/.exec(className);
+      const language = match ? match[1] : "";
+      const trimmedCode = String(code ?? "").trimEnd();
+
+      if (language === "mermaid") {
+        return <MermaidBlock code={trimmedCode} />;
+      }
+
       return (
         <CodeBlock
-          language={match ? match[1] : ""}
-          code={String(code ?? "").trimEnd()}
+          language={language}
+          code={trimmedCode}
         />
       );
     }
