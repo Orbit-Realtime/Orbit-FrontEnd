@@ -45,6 +45,7 @@ export default function ChatPage() {
   const isInitialConnectRef = useRef(true);
   const historyFetchIdRef = useRef(0);
   const memberLastReadRef = useRef({});
+  const countedDiscussionMessageIdsRef = useRef(new Set());
 
   // WebSocket 수신 메시지 처리
   const handleMessage = useCallback(
@@ -93,6 +94,26 @@ export default function ChatPage() {
 
         case "DISCUSSION_MESSAGE_EVENT":
           appendDiscussionEvent(data);
+
+          if (
+            data.chatId &&
+            data.discussionMessageId &&
+            !countedDiscussionMessageIdsRef.current.has(data.discussionMessageId)
+          ) {
+            countedDiscussionMessageIdsRef.current.add(data.discussionMessageId);
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.chatId === data.chatId
+                  ? {
+                      ...msg,
+                      discussionMessageCount: (msg.discussionMessageCount ?? 0) + 1,
+                      discussionId: msg.discussionId ?? data.discussionId,
+                    }
+                  : msg
+              )
+            );
+          }
           break;
 
         case "ERROR":
