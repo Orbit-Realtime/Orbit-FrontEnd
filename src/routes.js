@@ -3,6 +3,7 @@ import { useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ChatPage from "./pages/ChatPage";
+import InvitePage from "./pages/InvitePage";
 
 function PrivateRoute({ children }) {
   const { auth } = useAuth();
@@ -41,6 +42,7 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route path="/invite/:inviteCode" element={<InvitePage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

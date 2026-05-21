@@ -17,3 +17,9 @@ export const getSpaceMembers = (chatRoomId) =>
 
 export const inviteMembers = (chatRoomId, memberIds) =>
   axiosInstance.post(`/api/chat/room/${chatRoomId}/members`, { memberIds });
+
+export const getSpaceByInviteCode = (inviteCode) =>
+  axiosInstance.get(`/api/spaces/invite/${inviteCode}`);
+
+export const joinSpaceByInviteCode = (inviteCode) =>
+  axiosInstance.post(`/api/spaces/invite/${inviteCode}/join`);

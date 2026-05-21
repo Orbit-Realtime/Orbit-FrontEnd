@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { login } from "../api/memberApi";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signin } = useAuth();
 
   const [form, setForm] = useState({ username: "", password: "" });
@@ -28,7 +29,8 @@ export default function LoginPage() {
     try {
       const result = await login(form.username, form.password);
       signin(result.data.memberId, result.data.nickname);
-      navigate("/chat", { replace: true });
+      const from = location.state?.from || "/chat";
+      navigate(from, { replace: true });
     } catch (err) {
       const message = err.response?.data?.message;
       setError(message || "로그인 중 오류가 발생했습니다.");
