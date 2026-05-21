@@ -1,7 +1,7 @@
 import axiosInstance from "./axios";
 
-export const createSpace = (receiverIds, title) =>
-  axiosInstance.post("/api/chat/room", { receiverIds, title });
+export const createSpace = (title) =>
+  axiosInstance.post("/api/chat/room", { title });
 
 export const getSpaces = () =>
   axiosInstance.get("/api/chat/rooms");
