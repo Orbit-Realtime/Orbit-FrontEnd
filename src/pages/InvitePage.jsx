@@ -46,8 +46,9 @@ export default function InvitePage() {
     setJoining(true);
     setJoinError(null);
     try {
-      await joinSpaceByInviteCode(inviteCode);
-      navigate("/chat", { replace: true });
+      const result = await joinSpaceByInviteCode(inviteCode);
+      const spaceId = result?.data?.spaceId ?? null;
+      navigate("/chat", { replace: true, state: { selectedSpaceId: spaceId } });
     } catch (e) {
       const message = e.response?.data?.message;
       setJoinError(message || "참여 중 오류가 발생했습니다.");
@@ -127,7 +128,12 @@ export default function InvitePage() {
               <div className="w-full flex flex-col gap-3">
                 <p className="text-center text-orbit-subtle text-sm">이미 참여 중인 Space입니다.</p>
                 <button
-                  onClick={handleGoToChat}
+                  onClick={() =>
+                    navigate("/chat", {
+                      replace: true,
+                      state: { selectedSpaceId: spaceInfo.spaceId },
+                    })
+                  }
                   className="w-full py-2.5 bg-orbit-surface2 hover:bg-orbit-elevated text-orbit-secondary border border-orbit-border rounded-lg text-sm font-medium transition-colors"
                 >
                   Space로 이동

@@ -12,6 +12,7 @@ const sortSpaces = (spaces) =>
 export function useSpaces(selectedSpaceId) {
   const [spaces, setSpaces] = useState([]);
   const [spacesError, setSpacesError] = useState(false);
+  const [spacesLoaded, setSpacesLoaded] = useState(false);
 
   useEffect(() => {
     getSpaces()
@@ -19,7 +20,8 @@ export function useSpaces(selectedSpaceId) {
         setSpaces(sortSpaces(result.data ?? []));
         setSpacesError(false);
       })
-      .catch(() => setSpacesError(true));
+      .catch(() => setSpacesError(true))
+      .finally(() => setSpacesLoaded(true));
   }, []);
 
   const refreshSpaces = useCallback(() => {
@@ -85,6 +87,7 @@ export function useSpaces(selectedSpaceId) {
   return {
     spaces,
     spacesError,
+    spacesLoaded,
     selectedSpace,
     refreshSpaces,
     applySpaceUpdate,

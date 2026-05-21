@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
 import { useSpaces } from "../hooks/useSpaces";
 import { useWebSocket } from "../socket/useWebSocket";
@@ -21,7 +22,13 @@ export default function ChatPage() {
   // 데이터 상태 — realtime 연동 (위치 유지)
   const [selectedSpaceId, setSelectedSpaceId] = useState(null);
 
-  const { spaces, spacesError, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
+  const location = useLocation();
+  const [pendingSelectSpaceId] = useState(
+    () => location.state?.selectedSpaceId ?? null
+  );
+  const pendingConsumedRef = useRef(false);
+
+  const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
   const [messages, setMessages] = useState([]);
   const [lastReadMessageId, setLastReadMessageId] = useState(null);
@@ -223,6 +230,20 @@ export default function ChatPage() {
     },
     [selectedSpaceId, sendEnterRoom, notifyEntered]
   );
+
+  // invite 진입 시 Space 자동 선택
+  useEffect(() => {
+    if (!pendingSelectSpaceId || pendingConsumedRef.current) return;
+    if (!connected) return;
+    if (!spacesLoaded) return;
+
+    const exists = spaces.some((s) => s.chatRoomId === pendingSelectSpaceId);
+    if (!exists) return;
+
+    pendingConsumedRef.current = true;
+    window.history.replaceState({}, "", window.location.pathname);
+    handleSelectSpace(pendingSelectSpaceId);
+  }, [pendingSelectSpaceId, connected, spacesLoaded, spaces, handleSelectSpace]);
 
   // 이전 메시지 로드
   const handleLoadMore = useCallback(() => {
