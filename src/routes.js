@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -12,7 +12,12 @@ function PrivateRoute({ children }) {
 
 function PublicRoute({ children }) {
   const { auth } = useAuth();
-  return auth ? <Navigate to="/chat" replace /> : children;
+  const location = useLocation();
+  if (auth) {
+    const to = location.state?.from || "/chat";
+    return <Navigate to={to} replace />;
+  }
+  return children;
 }
 
 function AppRoutes() {
