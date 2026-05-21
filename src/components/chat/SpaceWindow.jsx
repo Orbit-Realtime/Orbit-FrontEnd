@@ -79,19 +79,43 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
     await onLeave();
   };
 
+  const copyToClipboard = async (text) => {
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return;
+      } catch (err) {
+        console.warn("[SpaceWindow] Clipboard API 실패, fallback 시도:", err.name, err.message);
+      }
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none;";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const success = document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    if (!success) {
+      throw new Error("execCommand copy failed");
+    }
+  };
+
   const handleCopyInviteLink = async () => {
     if (copyStatus !== "idle" || !space?.chatRoomId) return;
-    if (!navigator.clipboard) return;
 
     setCopyStatus("loading");
 
     try {
       const result = await getInviteCode(space.chatRoomId);
       const url = `${window.location.origin}/invite/${result.data.inviteCode}`;
-      await navigator.clipboard.writeText(url);
+      await copyToClipboard(url);
       setCopyStatus("copied");
       setTimeout(() => setCopyStatus("idle"), 2000);
-    } catch {
+    } catch (error) {
+      console.error("[SpaceWindow] 초대 링크 복사 실패:", error);
       setCopyStatus("error");
       setTimeout(() => setCopyStatus("idle"), 2000);
     }
