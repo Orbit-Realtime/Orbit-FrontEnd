@@ -23,3 +23,6 @@ export const getSpaceByInviteCode = (inviteCode) =>
 
 export const joinSpaceByInviteCode = (inviteCode) =>
   axiosInstance.post(`/api/spaces/invite/${inviteCode}/join`);
+
+export const getInviteCode = (spaceId) =>
+  axiosInstance.get(`/api/spaces/${spaceId}/invite-code`);

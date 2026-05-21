@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { getInviteCode } from "../../api/spaceApi";
 import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
@@ -12,6 +13,8 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [leaveConfirm, setLeaveConfirm] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("idle");
+  // "idle" | "loading" | "copied" | "error"
 
   const {
     scrollContainerRef,
@@ -26,6 +29,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
   useEffect(() => {
     setIsEditingTitle(false);
     setLeaveConfirm(false);
+    setCopyStatus("idle");
   }, [space?.chatRoomId]);
 
   const handleSend = () => {
@@ -73,6 +77,24 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
   const handleLeaveConfirm = async () => {
     setLeaveConfirm(false);
     await onLeave();
+  };
+
+  const handleCopyInviteLink = async () => {
+    if (copyStatus !== "idle" || !space?.chatRoomId) return;
+    if (!navigator.clipboard) return;
+
+    setCopyStatus("loading");
+
+    try {
+      const result = await getInviteCode(space.chatRoomId);
+      const url = `${window.location.origin}/invite/${result.data.inviteCode}`;
+      await navigator.clipboard.writeText(url);
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus("idle"), 2000);
+    } catch {
+      setCopyStatus("error");
+      setTimeout(() => setCopyStatus("idle"), 2000);
+    }
   };
 
   const showDividerAfter = (msg, idx) =>
@@ -141,6 +163,34 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
               <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
             </svg>
+          </button>
+
+          {/* 초대 링크 복사 버튼 */}
+          <button
+            onClick={handleCopyInviteLink}
+            disabled={copyStatus === "loading"}
+            title={copyStatus === "copied" ? "복사됨!" : "초대 링크 복사"}
+            className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${
+              copyStatus === "copied"
+                ? "text-orbit-cyan bg-orbit-surface2"
+                : copyStatus === "error"
+                ? "text-red-400 bg-orbit-surface2"
+                : "text-orbit-muted hover:text-white hover:bg-orbit-surface2"
+            }`}
+          >
+            {copyStatus === "copied" ? (
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+              </svg>
+            ) : copyStatus === "error" ? (
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
+              </svg>
+            )}
           </button>
 
           {/* 나가기 버튼 */}
