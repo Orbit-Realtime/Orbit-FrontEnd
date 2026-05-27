@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 
-const WS_URL = "ws://localhost:8080/ws/chat";
+const WS_URL = process.env.REACT_APP_WS_URL || "ws://localhost:8080/ws/chat";
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY_MS = 3000;
 
