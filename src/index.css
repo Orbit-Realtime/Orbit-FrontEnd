@@ -15,3 +15,134 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ─── Orbit Design System ─── */
+
+@layer components {
+
+  /* 패널 컨테이너: sidebar, right panel 등 border가 있는 배경 영역 */
+  .orbit-panel {
+    @apply bg-orbit-surface;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* 카드: 한 단계 띄운 elevated 표면 */
+  .orbit-card {
+    @apply bg-orbit-elevated rounded-xl;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  /* 입력창 공통 베이스: textarea, input */
+  .orbit-input {
+    @apply bg-orbit-surface2 text-orbit-text text-sm
+           rounded-lg px-3 py-2 outline-none resize-none
+           placeholder:text-orbit-subtle
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .orbit-input:focus {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* 글로우 이펙트: cyan accent halo */
+  .orbit-glow {
+    box-shadow: 0 0 16px rgba(67, 217, 255, 0.18);
+  }
+
+  /* Sidebar ambient: root workspace 좌상단 cyan glow 연속성 재현 */
+  .orbit-sidebar-bg {
+    background-image: radial-gradient(
+      ellipse 120% 40% at 80% 5%,
+      rgba(67, 217, 255, 0.030) 0%,
+      transparent 70%
+    );
+  }
+
+  /* Panel ambient: discussion/member panel 상단 crown ambient */
+  .orbit-panel-bg {
+    background-image: radial-gradient(
+      ellipse 120% 35% at 50% 0%,
+      rgba(67, 217, 255, 0.025) 0%,
+      transparent 65%
+    );
+  }
+
+}
+
+@layer utilities {
+
+  /* 스크롤바: 스크롤 영역에 적용할 utility class */
+  .orbit-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #617089 transparent;
+  }
+
+  .orbit-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .orbit-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .orbit-scrollbar::-webkit-scrollbar-thumb {
+    background: #617089;
+    border-radius: 2px;
+  }
+
+  .orbit-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #8A97AD;
+  }
+
+}
+
+/* ─── Orbit Overlay System ─── */
+
+@layer utilities {
+
+  /* Vignette: 가장자리 어두워짐 + 중앙 집중 효과 */
+  .orbit-vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+    background: radial-gradient(
+      ellipse 120% 100% at 50% 50%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.28) 100%
+    );
+  }
+
+  /* Arc overlay: 배경 궤도선 (vignette 아래에서 엣지에서 자연 소멸) */
+  .orbit-arc-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 15;
+  }
+
+}
+
+/* ─── Orbit Workspace Base ─── */
+
+@layer components {
+
+  /* Root workspace: base bg + ambient radial glow (cyan top-left, blue bottom-right) */
+  .orbit-workspace {
+    background-color: #030712;
+    background-image:
+      radial-gradient(
+        ellipse 70% 50% at 15% 8%,
+        rgba(67, 217, 255, 0.05) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 50% 40% at 85% 92%,
+        rgba(59, 130, 246, 0.04) 0%,
+        transparent 70%
+      );
+  }
+
+}

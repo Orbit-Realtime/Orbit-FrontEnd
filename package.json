@@ -8,10 +8,14 @@
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.8.4",
+    "mermaid": "^11.15.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.4.0",
     "react-scripts": "^5.0.1",
+    "react-syntax-highlighter": "^16.1.1",
+    "remark-gfm": "^4.0.1",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
@@ -42,6 +46,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "proxy": "http://localhost:8080"
+  }
 }
