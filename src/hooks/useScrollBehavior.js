@@ -79,7 +79,7 @@ export default function useScrollBehavior({
         }
       }
     }
-  }, [loading, messages, lastReadMessageId]);
+  }, [loading, messages, lastReadMessageId, currentUserId]);
 
   // isLoadingMore prop을 ref에 동기화 (다른 effect 내부에서 최신값 참조용)
   useEffect(() => {
