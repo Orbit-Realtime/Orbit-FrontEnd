@@ -1,4 +1,4 @@
-import { mergeMessagesById } from '../../utils/messageState';
+import { mergeMessagesById, mergeDiscussionMessagesById } from '../../utils/messageState';
 
 test('history 응답이 늦게 도착해도 동일 chatId 메시지는 중복되지 않는다', () => {
   // WS로 먼저 도착한 메시지가 READ_EVENT로 갱신된 상태
@@ -41,4 +41,46 @@ test('메시지 병합 결과는 chatId 오름차순을 유지한다', () => {
   const result = mergeMessagesById(prev, incoming);
 
   expect(result.map((m) => m.chatId)).toEqual([1, 2, 3, 4, 5]);
+});
+
+test('Discussion sync 응답이 늦게 도착해도 WS 메시지는 유실되지 않는다', () => {
+  // WS로 먼저 도착한 Discussion 메시지
+  const prev = [{ discussionMessageId: 4, content: 'ws-discussion' }];
+  // 이후 도착한 sync 응답 — id 4 미포함 (fetch 시점 이후 저장됨)
+  const incoming = [
+    { discussionMessageId: 1 },
+    { discussionMessageId: 2 },
+    { discussionMessageId: 3 },
+  ];
+
+  const result = mergeDiscussionMessagesById(prev, incoming);
+
+  expect(result).toHaveLength(4);
+  expect(result.map((m) => m.discussionMessageId)).toEqual([1, 2, 3, 4]);
+  // prev 우선 — WS로 받은 메시지가 유지된다
+  expect(result[3].content).toBe('ws-discussion');
+});
+
+test('동일 discussionMessageId 메시지는 중복 병합되지 않는다', () => {
+  const prev = [{ discussionMessageId: 1 }, { discussionMessageId: 2 }];
+  // sync 응답이 동일한 id를 포함
+  const incoming = [{ discussionMessageId: 1 }, { discussionMessageId: 2 }];
+
+  const result = mergeDiscussionMessagesById(prev, incoming);
+
+  expect(result).toHaveLength(2);
+  expect(result.map((m) => m.discussionMessageId)).toEqual([1, 2]);
+});
+
+test('Discussion 메시지 병합 결과는 discussionMessageId 오름차순을 유지한다', () => {
+  const prev = [{ discussionMessageId: 5 }, { discussionMessageId: 3 }];
+  const incoming = [
+    { discussionMessageId: 1 },
+    { discussionMessageId: 4 },
+    { discussionMessageId: 2 },
+  ];
+
+  const result = mergeDiscussionMessagesById(prev, incoming);
+
+  expect(result.map((m) => m.discussionMessageId)).toEqual([1, 2, 3, 4, 5]);
 });

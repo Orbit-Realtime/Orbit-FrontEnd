@@ -18,3 +18,25 @@ export function mergeMessagesById(prev, incoming) {
   for (const msg of prev) map.set(msg.chatId, msg);
   return Array.from(map.values()).sort((a, b) => a.chatId - b.chatId);
 }
+
+/**
+ * Discussion 메시지를 discussionMessageId 기준으로 병합한다.
+ *
+ * 우선순위: prev > incoming
+ * - prev에 이미 존재하는 메시지는 유지
+ * - incoming에만 있는 메시지는 추가
+ * - 병합 후 discussionMessageId 오름차순 정렬
+ *
+ * @param {Array<{discussionMessageId: number}>} prev
+ * @param {Array<{discussionMessageId: number}>} incoming
+ * @returns {Array<{discussionMessageId: number}>}
+ */
+export function mergeDiscussionMessagesById(prev, incoming) {
+  const map = new Map();
+  for (const msg of incoming) map.set(msg.discussionMessageId, msg);
+  // prev가 나중에 덮어써서 우선순위를 가진다
+  for (const msg of prev) map.set(msg.discussionMessageId, msg);
+  return Array.from(map.values()).sort(
+    (a, b) => a.discussionMessageId - b.discussionMessageId
+  );
+}
