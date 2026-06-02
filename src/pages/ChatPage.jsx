@@ -101,7 +101,7 @@ export default function ChatPage() {
         }
 
         case "DISCUSSION_MESSAGE_EVENT":
-          if (data.chatRoomId !== selectedSpaceIdRef.current) break;
+          if (data.spaceId !== selectedSpaceIdRef.current) break;
           appendDiscussionEvent(data);
 
           if (
@@ -133,7 +133,7 @@ export default function ChatPage() {
           break;
       }
     },
-    [selectedSpaceId, applySpaceUpdate, appendDiscussionEvent]
+    [applySpaceUpdate, appendDiscussionEvent]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
