@@ -70,7 +70,7 @@ export default function ChatPage() {
           break;
 
         case "READ_EVENT": {
-          if (data.chatRoomId !== selectedSpaceId) break;
+          if (data.chatRoomId !== selectedSpaceIdRef.current) break;
 
           const lastProcessed = memberLastReadRef.current[data.memberId] ?? null;
           if (lastProcessed !== null && data.currentLastReadChatId <= lastProcessed) break;
