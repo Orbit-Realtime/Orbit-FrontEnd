@@ -60,7 +60,7 @@ export default function ChatPage() {
     (data) => {
       switch (data.messageType) {
         case "CHAT_MESSAGE":
-          if (data.chatRoomId === selectedSpaceId) {
+          if (data.chatRoomId === selectedSpaceIdRef.current) {
             setMessages((prev) => mergeMessagesById(prev, [data]));
           }
           break;
@@ -169,6 +169,7 @@ export default function ChatPage() {
           getMessageHistory(spaceId)
             .then((result) => {
               if (fetchId !== historyFetchIdRef.current) return;
+              if (spaceId !== selectedSpaceIdRef.current) return;
               const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
               setMessages((prev) => mergeMessagesById(prev, msgs ?? []));
               setLastReadMessageId(lastReadMessageId ?? null);
@@ -213,6 +214,7 @@ export default function ChatPage() {
       getMessageHistory(spaceId)
         .then((result) => {
           if (fetchId !== historyFetchIdRef.current) return;
+          if (spaceId !== selectedSpaceIdRef.current) return;
           const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
           setMessages((prev) => mergeMessagesById(prev, msgs ?? []));
           setLastReadMessageId(lastReadMessageId ?? null);
@@ -275,6 +277,7 @@ export default function ChatPage() {
     getMessageHistory(selectedSpaceId)
       .then((result) => {
         if (fetchId !== historyFetchIdRef.current) return;
+        if (selectedSpaceId !== selectedSpaceIdRef.current) return;
         const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
         setMessages((prev) => mergeMessagesById(prev, msgs ?? []));
         setLastReadMessageId(lastReadMessageId ?? null);
