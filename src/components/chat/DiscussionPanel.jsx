@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useResizablePanel } from "../../hooks/useResizablePanel";
 import { getDiscussion, createDiscussion, getDiscussionMessages } from "../../api/discussionApi";
+import { mergeDiscussionMessagesById } from "../../utils/messageState";
 import { formatMessageTime } from "../../utils/formatTime";
 import { useAuth } from "../../context/AuthContext";
 import DiscussionMessageItem from "./DiscussionMessageItem";
@@ -63,8 +64,8 @@ export default function DiscussionPanel({ message, onClose, incomingDiscussionEv
     const result = await getDiscussionMessages(discussionId);
     if (fetchId !== syncFetchIdRef.current) return;
     const messages = result.data ?? [];
-    processedMessageIdsRef.current = new Set(messages.map((m) => m.discussionMessageId));
-    setDiscussionMessages(messages);
+    messages.forEach((m) => processedMessageIdsRef.current.add(m.discussionMessageId));
+    setDiscussionMessages((prev) => mergeDiscussionMessagesById(prev, messages));
     setMessagesError(null);
   }, [discussionId]);
 
