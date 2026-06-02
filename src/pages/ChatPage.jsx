@@ -6,6 +6,7 @@ import { useWebSocket } from "../socket/useWebSocket";
 import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
+import { mergeMessagesById } from "../utils/messageState";
 import SpaceList from "../components/chat/SpaceList";
 import SpaceWindow from "../components/chat/SpaceWindow";
 import MemberPanel from "../components/chat/MemberPanel";
@@ -60,7 +61,7 @@ export default function ChatPage() {
       switch (data.messageType) {
         case "CHAT_MESSAGE":
           if (data.chatRoomId === selectedSpaceId) {
-            setMessages((prev) => [...prev, data]);
+            setMessages((prev) => mergeMessagesById(prev, [data]));
           }
           break;
 
@@ -169,7 +170,7 @@ export default function ChatPage() {
             .then((result) => {
               if (fetchId !== historyFetchIdRef.current) return;
               const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
-              setMessages(msgs ?? []);
+              setMessages((prev) => mergeMessagesById(prev, msgs ?? []));
               setLastReadMessageId(lastReadMessageId ?? null);
               setHasMore(more ?? false);
               setOldestChatId(msgs?.[0]?.chatId ?? null);
@@ -213,7 +214,7 @@ export default function ChatPage() {
         .then((result) => {
           if (fetchId !== historyFetchIdRef.current) return;
           const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
-          setMessages(msgs ?? []);
+          setMessages((prev) => mergeMessagesById(prev, msgs ?? []));
           setLastReadMessageId(lastReadMessageId ?? null);
           setHasMore(more ?? false);
           setOldestChatId(msgs?.[0]?.chatId ?? null);
@@ -275,7 +276,7 @@ export default function ChatPage() {
       .then((result) => {
         if (fetchId !== historyFetchIdRef.current) return;
         const { messages: msgs, lastReadMessageId, hasMore: more } = result.data;
-        setMessages(msgs ?? []);
+        setMessages((prev) => mergeMessagesById(prev, msgs ?? []));
         setLastReadMessageId(lastReadMessageId ?? null);
         setHasMore(more ?? false);
         setOldestChatId(msgs?.[0]?.chatId ?? null);
