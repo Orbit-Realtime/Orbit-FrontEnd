@@ -133,7 +133,7 @@ export default function ChatPage() {
           break;
       }
     },
-    [selectedSpaceId, applySpaceUpdate, appendDiscussionEvent]
+    [applySpaceUpdate, appendDiscussionEvent]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
