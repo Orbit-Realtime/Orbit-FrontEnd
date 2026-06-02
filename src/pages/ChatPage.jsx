@@ -101,6 +101,7 @@ export default function ChatPage() {
         }
 
         case "DISCUSSION_MESSAGE_EVENT":
+          if (data.chatRoomId !== selectedSpaceIdRef.current) break;
           appendDiscussionEvent(data);
 
           if (
