@@ -296,6 +296,26 @@ export default function ChatPage() {
     if (spaceId) handleSelectSpace(spaceId);
   }, [refreshSpaces, handleSelectSpace]);
 
+  const handleBack = useCallback(() => {
+    setSelectedSpaceId(null);
+  }, []);
+
+  const handleToggleMembers = useCallback(() => {
+    setPanelState((p) => (p?.type === "members" ? null : { type: "members" }));
+  }, []);
+
+  const handleOpenDiscussion = useCallback(
+    (msg) => {
+      setPanelState({ type: "discussion", message: msg });
+      clearDiscussionEvents();
+    },
+    [clearDiscussionEvents]
+  );
+
+  const membersOpen = panelState?.type === "members";
+  const activeDiscussionChatId =
+    panelState?.type === "discussion" ? panelState.message.chatId : null;
+
   return (
     <div className="orbit-workspace relative flex flex-col h-screen text-orbit-text overflow-hidden">
       <WorkspaceBackground />
@@ -326,7 +346,7 @@ export default function ChatPage() {
               onSend={handleSend}
               loading={historyLoading}
               historyError={historyError}
-              onBack={() => setSelectedSpaceId(null)}
+              onBack={handleBack}
               onLeave={handleLeaveRoom}
               onRename={handleRenameRoom}
               connected={connected}
@@ -334,13 +354,10 @@ export default function ChatPage() {
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}
               onRetryHistory={handleRetryHistory}
-              membersOpen={panelState?.type === "members"}
-              onToggleMembers={() => setPanelState((p) => (p?.type === "members" ? null : { type: "members" }))}
-              onOpenDiscussion={(msg) => {
-                setPanelState({ type: "discussion", message: msg });
-                clearDiscussionEvents();
-              }}
-              activeDiscussionChatId={panelState?.type === "discussion" ? panelState.message.chatId : null}
+              membersOpen={membersOpen}
+              onToggleMembers={handleToggleMembers}
+              onOpenDiscussion={handleOpenDiscussion}
+              activeDiscussionChatId={activeDiscussionChatId}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-orbit-subtle">
