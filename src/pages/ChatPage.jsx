@@ -6,7 +6,7 @@ import { useWebSocket } from "../socket/useWebSocket";
 import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
-import { mergeMessagesById } from "../utils/messageState";
+import { mergeMessagesById, applyReadEvent } from "../utils/messageState";
 import SpaceList from "../components/chat/SpaceList";
 import SpaceWindow from "../components/chat/SpaceWindow";
 import MemberPanel from "../components/chat/MemberPanel";
@@ -77,25 +77,7 @@ export default function ChatPage() {
 
           memberLastReadRef.current[data.memberId] = data.currentLastReadChatId;
 
-          setMessages((prev) =>
-            prev.map((msg) => {
-              const previous = data.previousLastReadChatId;
-              const current = data.currentLastReadChatId;
-
-              const inRange =
-                (previous === null || msg.chatId > previous) &&
-                msg.chatId <= current;
-
-              const isReadMemberOwnMessage = msg.senderId === data.memberId;
-
-              if (!inRange || isReadMemberOwnMessage) return msg;
-
-              return {
-                ...msg,
-                unreadMemberCount: Math.max(0, msg.unreadMemberCount - 1),
-              };
-            })
-          );
+          setMessages((prev) => applyReadEvent(prev, data));
 
           break;
         }
