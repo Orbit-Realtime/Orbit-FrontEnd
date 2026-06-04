@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
+import { usePendingInvite } from "../hooks/usePendingInvite";
 import { useSpaces } from "../hooks/useSpaces";
 import { useWsErrorBanner } from "../hooks/useWsErrorBanner";
 import { useWebSocket } from "../socket/useWebSocket";
@@ -23,12 +23,6 @@ export default function ChatPage() {
 
   // 데이터 상태 — realtime 연동 (위치 유지)
   const [selectedSpaceId, setSelectedSpaceId] = useState(null);
-
-  const location = useLocation();
-  const [pendingSelectSpaceId] = useState(
-    () => location.state?.selectedSpaceId ?? null
-  );
-  const pendingConsumedRef = useRef(false);
 
   const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
@@ -116,7 +110,7 @@ export default function ChatPage() {
           break;
       }
     },
-    [applySpaceUpdate, appendDiscussionEvent]
+    [applySpaceUpdate, appendDiscussionEvent, setWsError]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
@@ -211,19 +205,7 @@ export default function ChatPage() {
     [selectedSpaceId, sendEnterRoom, notifyEntered]
   );
 
-  // invite 진입 시 Space 자동 선택
-  useEffect(() => {
-    if (!pendingSelectSpaceId || pendingConsumedRef.current) return;
-    if (!connected) return;
-    if (!spacesLoaded) return;
-
-    const exists = spaces.some((s) => s.chatRoomId === pendingSelectSpaceId);
-    if (!exists) return;
-
-    pendingConsumedRef.current = true;
-    window.history.replaceState({}, "", window.location.pathname);
-    handleSelectSpace(pendingSelectSpaceId);
-  }, [pendingSelectSpaceId, connected, spacesLoaded, spaces, handleSelectSpace]);
+  usePendingInvite({ connected, spacesLoaded, spaces, onSelectSpace: handleSelectSpace });
 
   // 이전 메시지 로드
   const handleLoadMore = useCallback(() => {
