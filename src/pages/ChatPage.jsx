@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
 import { useSpaces } from "../hooks/useSpaces";
+import { useWsErrorBanner } from "../hooks/useWsErrorBanner";
 import { useWebSocket } from "../socket/useWebSocket";
 import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
@@ -38,7 +39,7 @@ export default function ChatPage() {
   const [hasMore, setHasMore] = useState(false);
   const [oldestChatId, setOldestChatId] = useState(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [wsError, setWsError] = useState(null);
+  const { wsError, setWsError } = useWsErrorBanner();
 
   const {
     incomingDiscussionEvents,
@@ -124,13 +125,6 @@ export default function ChatPage() {
 
   // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
-
-  // wsError 자동 소멸 (4초)
-  useEffect(() => {
-    if (!wsError) return;
-    const timer = setTimeout(() => setWsError(null), 4000);
-    return () => clearTimeout(timer);
-  }, [wsError]);
 
   // 재연결 시 state recovery: WebSocket이 false→true로 바뀌면 상태 재동기화
   useEffect(() => {
