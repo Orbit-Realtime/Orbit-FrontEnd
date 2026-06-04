@@ -312,6 +312,15 @@ export default function ChatPage() {
     [clearDiscussionEvents]
   );
 
+  const handleCloseMemberPanel = useCallback(() => {
+    setPanelState(null);
+  }, []);
+
+  const handleCloseDiscussion = useCallback(() => {
+    setPanelState(null);
+    clearDiscussionEvents();
+  }, [clearDiscussionEvents]);
+
   const membersOpen = panelState?.type === "members";
   const activeDiscussionChatId =
     panelState?.type === "discussion" ? panelState.message.chatId : null;
@@ -370,7 +379,7 @@ export default function ChatPage() {
         {panelState?.type === "members" && selectedSpaceId && (
           <MemberPanel
             spaceId={selectedSpaceId}
-            onClose={() => setPanelState(null)}
+            onClose={handleCloseMemberPanel}
           />
         )}
 
@@ -381,10 +390,7 @@ export default function ChatPage() {
             onConsumeDiscussionEvents={consumeDiscussionEvents}
             sendDiscussionMessage={sendDiscussionMessage}
             connected={connected}
-            onClose={() => {
-              setPanelState(null);
-              clearDiscussionEvents();
-            }}
+            onClose={handleCloseDiscussion}
           />
         )}
       </div>
