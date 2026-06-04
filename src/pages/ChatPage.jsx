@@ -15,6 +15,8 @@ import DiscussionPanel from "../components/chat/DiscussionPanel";
 import CreateSpaceModal from "../components/chat/CreateSpaceModal";
 import UserHeader from "../components/chat/UserHeader";
 import WorkspaceBackground from "../components/chat/WorkspaceBackground";
+import ReconnectBanner from "../components/chat/ReconnectBanner";
+import WsErrorBanner from "../components/chat/WsErrorBanner";
 
 export default function ChatPage() {
   // UI 상태
@@ -299,35 +301,8 @@ export default function ChatPage() {
     <div className="orbit-workspace relative flex flex-col h-screen text-orbit-text overflow-hidden">
       <WorkspaceBackground />
 
-      {/* 재연결 배너 */}
-      {!connected && (
-        <div className={`flex items-center justify-center gap-2 py-1.5 text-xs font-medium flex-shrink-0 ${
-          reconnecting ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"
-        }`}>
-          {reconnecting ? (
-            <>
-              <div className="w-3 h-3 border border-yellow-400 border-t-transparent rounded-full animate-spin" />
-              서버에 재연결 중입니다...
-            </>
-          ) : (
-            "연결이 끊어졌습니다. 페이지를 새로고침 해주세요."
-          )}
-        </div>
-      )}
-
-      {/* 서버 에러 배너 */}
-      {wsError && (
-        <div className="flex items-center justify-between gap-2 py-1.5 px-4 text-xs font-medium flex-shrink-0 bg-orange-500/20 text-orange-400">
-          <span>{wsError}</span>
-          <button
-            onClick={() => setWsError(null)}
-            className="flex-shrink-0 hover:text-white transition-colors"
-            aria-label="에러 메시지 닫기"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      <ReconnectBanner connected={connected} reconnecting={reconnecting} />
+      <WsErrorBanner wsError={wsError} onDismiss={() => setWsError(null)} />
 
       {/* 본문 — 3-column layout */}
       <div className="flex flex-1 overflow-hidden relative z-10">
