@@ -296,6 +296,14 @@ export default function ChatPage() {
     if (spaceId) handleSelectSpace(spaceId);
   }, [refreshSpaces, handleSelectSpace]);
 
+  const handleOpenCreateModal = useCallback(() => {
+    setShowCreateModal(true);
+  }, []);
+
+  const handleCloseCreateModal = useCallback(() => {
+    setShowCreateModal(false);
+  }, []);
+
   const handleBack = useCallback(() => {
     setSelectedSpaceId(null);
   }, []);
@@ -342,7 +350,7 @@ export default function ChatPage() {
           onRetrySpaces={refreshSpaces}
           selectedSpaceId={selectedSpaceId}
           onSelectSpace={handleSelectSpace}
-          onCreateSpace={() => setShowCreateModal(true)}
+          onCreateSpace={handleOpenCreateModal}
         />
 
         {/* ── Main Conversation ── */}
@@ -398,7 +406,7 @@ export default function ChatPage() {
       {showCreateModal && (
         <CreateSpaceModal
           onCreated={handleSpaceCreated}
-          onClose={() => setShowCreateModal(false)}
+          onClose={handleCloseCreateModal}
         />
       )}
 
