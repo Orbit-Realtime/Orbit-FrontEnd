@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
+import { usePendingInvite } from "../hooks/usePendingInvite";
 import { useSpaces } from "../hooks/useSpaces";
+import { useWsErrorBanner } from "../hooks/useWsErrorBanner";
 import { useWebSocket } from "../socket/useWebSocket";
 import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
-import { mergeMessagesById } from "../utils/messageState";
+import { mergeMessagesById, applyReadEvent } from "../utils/messageState";
 import SpaceList from "../components/chat/SpaceList";
 import SpaceWindow from "../components/chat/SpaceWindow";
 import MemberPanel from "../components/chat/MemberPanel";
@@ -23,12 +24,6 @@ export default function ChatPage() {
   // 데이터 상태 — realtime 연동 (위치 유지)
   const [selectedSpaceId, setSelectedSpaceId] = useState(null);
 
-  const location = useLocation();
-  const [pendingSelectSpaceId] = useState(
-    () => location.state?.selectedSpaceId ?? null
-  );
-  const pendingConsumedRef = useRef(false);
-
   const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
   const [messages, setMessages] = useState([]);
@@ -38,7 +33,7 @@ export default function ChatPage() {
   const [hasMore, setHasMore] = useState(false);
   const [oldestChatId, setOldestChatId] = useState(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [wsError, setWsError] = useState(null);
+  const { wsError, setWsError } = useWsErrorBanner();
 
   const {
     incomingDiscussionEvents,
@@ -77,25 +72,7 @@ export default function ChatPage() {
 
           memberLastReadRef.current[data.memberId] = data.currentLastReadChatId;
 
-          setMessages((prev) =>
-            prev.map((msg) => {
-              const previous = data.previousLastReadChatId;
-              const current = data.currentLastReadChatId;
-
-              const inRange =
-                (previous === null || msg.chatId > previous) &&
-                msg.chatId <= current;
-
-              const isReadMemberOwnMessage = msg.senderId === data.memberId;
-
-              if (!inRange || isReadMemberOwnMessage) return msg;
-
-              return {
-                ...msg,
-                unreadMemberCount: Math.max(0, msg.unreadMemberCount - 1),
-              };
-            })
-          );
+          setMessages((prev) => applyReadEvent(prev, data));
 
           break;
         }
@@ -133,7 +110,7 @@ export default function ChatPage() {
           break;
       }
     },
-    [applySpaceUpdate, appendDiscussionEvent]
+    [applySpaceUpdate, appendDiscussionEvent, setWsError]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
@@ -142,13 +119,6 @@ export default function ChatPage() {
 
   // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
-
-  // wsError 자동 소멸 (4초)
-  useEffect(() => {
-    if (!wsError) return;
-    const timer = setTimeout(() => setWsError(null), 4000);
-    return () => clearTimeout(timer);
-  }, [wsError]);
 
   // 재연결 시 state recovery: WebSocket이 false→true로 바뀌면 상태 재동기화
   useEffect(() => {
@@ -235,19 +205,7 @@ export default function ChatPage() {
     [selectedSpaceId, sendEnterRoom, notifyEntered]
   );
 
-  // invite 진입 시 Space 자동 선택
-  useEffect(() => {
-    if (!pendingSelectSpaceId || pendingConsumedRef.current) return;
-    if (!connected) return;
-    if (!spacesLoaded) return;
-
-    const exists = spaces.some((s) => s.chatRoomId === pendingSelectSpaceId);
-    if (!exists) return;
-
-    pendingConsumedRef.current = true;
-    window.history.replaceState({}, "", window.location.pathname);
-    handleSelectSpace(pendingSelectSpaceId);
-  }, [pendingSelectSpaceId, connected, spacesLoaded, spaces, handleSelectSpace]);
+  usePendingInvite({ connected, spacesLoaded, spaces, onSelectSpace: handleSelectSpace });
 
   // 이전 메시지 로드
   const handleLoadMore = useCallback(() => {

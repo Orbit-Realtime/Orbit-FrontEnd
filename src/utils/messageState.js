@@ -20,6 +20,36 @@ export function mergeMessagesById(prev, incoming) {
 }
 
 /**
+ * READ_EVENT를 받아 messages 배열에 unreadMemberCount 감소를 적용한다.
+ *
+ * 정책:
+ * - previousLastReadChatId < chatId <= currentLastReadChatId 범위에 해당하는 메시지만 대상
+ * - 이벤트를 발생시킨 멤버 본인의 메시지는 제외
+ * - unreadMemberCount는 0 아래로 내려가지 않는다
+ *
+ * @param {Array<{chatId: number, senderId: number, unreadMemberCount: number}>} messages
+ * @param {{ memberId: number, previousLastReadChatId: number|null, currentLastReadChatId: number }} readEvent
+ * @returns {Array}
+ */
+export function applyReadEvent(messages, readEvent) {
+  const previous = readEvent.previousLastReadChatId;
+  const current = readEvent.currentLastReadChatId;
+  return messages.map((msg) => {
+    const inRange =
+      (previous === null || msg.chatId > previous) &&
+      msg.chatId <= current;
+    const isReadMemberOwnMessage = msg.senderId === readEvent.memberId;
+    if (!inRange || isReadMemberOwnMessage) {
+      return msg;
+    }
+    return {
+      ...msg,
+      unreadMemberCount: Math.max(0, msg.unreadMemberCount - 1),
+    };
+  });
+}
+
+/**
  * Discussion 메시지를 discussionMessageId 기준으로 병합한다.
  *
  * 우선순위: prev > incoming

@@ -1,4 +1,4 @@
-import { mergeMessagesById, mergeDiscussionMessagesById } from '../../utils/messageState';
+import { mergeMessagesById, mergeDiscussionMessagesById, applyReadEvent } from '../../utils/messageState';
 
 test('history 응답이 늦게 도착해도 동일 chatId 메시지는 중복되지 않는다', () => {
   // WS로 먼저 도착한 메시지가 READ_EVENT로 갱신된 상태
@@ -83,4 +83,64 @@ test('Discussion 메시지 병합 결과는 discussionMessageId 오름차순을 
   const result = mergeDiscussionMessagesById(prev, incoming);
 
   expect(result.map((m) => m.discussionMessageId)).toEqual([1, 2, 3, 4, 5]);
+});
+
+// ── applyReadEvent ─────────────────────────────────────────────────────────
+
+test('READ_EVENT 범위에 포함된 메시지만 unreadMemberCount가 감소한다', () => {
+  const messages = [
+    { chatId: 1, senderId: 99, unreadMemberCount: 3 },
+    { chatId: 2, senderId: 99, unreadMemberCount: 3 },
+    { chatId: 3, senderId: 99, unreadMemberCount: 3 },
+    { chatId: 4, senderId: 99, unreadMemberCount: 3 },
+  ];
+  const readEvent = {
+    memberId: 42,
+    previousLastReadChatId: 2,
+    currentLastReadChatId: 3,
+  };
+
+  const result = applyReadEvent(messages, readEvent);
+
+  // chatId 1, 2: 범위 밖 → 변화 없음
+  expect(result[0].unreadMemberCount).toBe(3);
+  expect(result[1].unreadMemberCount).toBe(3);
+  // chatId 3: 범위 안 (2 < 3 <= 3) → 감소
+  expect(result[2].unreadMemberCount).toBe(2);
+  // chatId 4: 범위 밖 (4 > 3) → 변화 없음
+  expect(result[3].unreadMemberCount).toBe(3);
+});
+
+test('READ_EVENT를 발생시킨 사용자의 메시지는 unreadMemberCount가 감소하지 않는다', () => {
+  const messages = [
+    { chatId: 1, senderId: 42, unreadMemberCount: 3 }, // 이벤트 발생자 본인 메시지
+    { chatId: 2, senderId: 99, unreadMemberCount: 3 }, // 다른 멤버 메시지
+  ];
+  const readEvent = {
+    memberId: 42,
+    previousLastReadChatId: null,
+    currentLastReadChatId: 2,
+  };
+
+  const result = applyReadEvent(messages, readEvent);
+
+  // 본인 메시지 → 감소하지 않음
+  expect(result[0].unreadMemberCount).toBe(3);
+  // 다른 멤버 메시지 → 감소
+  expect(result[1].unreadMemberCount).toBe(2);
+});
+
+test('unreadMemberCount는 0 아래로 내려가지 않는다', () => {
+  const messages = [
+    { chatId: 1, senderId: 99, unreadMemberCount: 0 },
+  ];
+  const readEvent = {
+    memberId: 42,
+    previousLastReadChatId: null,
+    currentLastReadChatId: 1,
+  };
+
+  const result = applyReadEvent(messages, readEvent);
+
+  expect(result[0].unreadMemberCount).toBe(0);
 });
