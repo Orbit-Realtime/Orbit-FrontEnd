@@ -144,3 +144,22 @@ test('unreadMemberCount는 0 아래로 내려가지 않는다', () => {
 
   expect(result[0].unreadMemberCount).toBe(0);
 });
+
+test('READ_EVENT로_갱신된_prev는_뒤늦게_도착한_stale_REST_응답에_의해_롤백되지_않는다', () => {
+  const base = [{ chatId: 4, senderId: 99, unreadMemberCount: 3 }];
+  const readEvent = {
+    memberId: 42,
+    previousLastReadChatId: null,
+    currentLastReadChatId: 4,
+  };
+
+  const prev = applyReadEvent(base, readEvent);
+
+  const incoming = [{ chatId: 4, senderId: 99, unreadMemberCount: 3 }];
+
+  const result = mergeMessagesById(prev, incoming);
+
+  expect(result).toHaveLength(1);
+  expect(result[0].chatId).toBe(4);
+  expect(result[0].unreadMemberCount).toBe(2);
+});
