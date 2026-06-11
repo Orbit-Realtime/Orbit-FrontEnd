@@ -48,6 +48,8 @@ export default function ChatPage() {
   const selectedSpaceIdRef = useRef(null);
   const prevConnectedRef = useRef(false);
   const isInitialConnectRef = useRef(true);
+  // 현재 socket session 기준으로 ENTER_ROOM synchronization이 완료된 selectedSpaceId
+  const enteredSpaceIdRef = useRef(null);
   const historyFetchIdRef = useRef(0);
   const memberLastReadRef = useRef({});
   const countedDiscussionMessageIdsRef = useRef(new Set());
@@ -130,9 +132,6 @@ export default function ChatPage() {
 
         const spaceId = selectedSpaceIdRef.current;
         if (spaceId !== null) {
-          sendEnterRoom(spaceId);
-          notifyEntered(spaceId);
-
           memberLastReadRef.current = {};
           setMessages([]);
           setIsLoadingMore(false);
@@ -163,7 +162,29 @@ export default function ChatPage() {
       isInitialConnectRef.current = false;
     }
     prevConnectedRef.current = connected;
-  }, [connected, sendEnterRoom, notifyEntered, refreshSpaces]);
+  }, [connected, refreshSpaces]);
+
+  useEffect(() => {
+    if (!connected) return;
+
+    if (selectedSpaceId === null) {
+      enteredSpaceIdRef.current = null;
+      return;
+    }
+
+    if (enteredSpaceIdRef.current === selectedSpaceId) return;
+
+    sendEnterRoom(selectedSpaceId);
+    notifyEntered(selectedSpaceId);
+
+    enteredSpaceIdRef.current = selectedSpaceId;
+  }, [connected, selectedSpaceId, sendEnterRoom, notifyEntered]);
+
+  useEffect(() => {
+    if (!connected) {
+      enteredSpaceIdRef.current = null;
+    }
+  }, [connected]);
 
   // 채팅방 선택
   const handleSelectSpace = useCallback(
@@ -179,10 +200,6 @@ export default function ChatPage() {
       setIsLoadingMore(false);
       setHistoryLoading(true);
       setHistoryError(false);
-      sendEnterRoom(spaceId);
-      // ENTER_ROOM 전송 후 useSpaceActivity 내부 상태를 동기화한다.
-      // ROOM_ACTIVE는 보내지 않는다 (ENTER_ROOM이 백엔드 activate를 처리함).
-      notifyEntered(spaceId);
       const fetchId = ++historyFetchIdRef.current;
       getMessageHistory(spaceId)
         .then((result) => {
@@ -204,7 +221,7 @@ export default function ChatPage() {
           setHistoryLoading(false);
         });
     },
-    [selectedSpaceId, sendEnterRoom, notifyEntered]
+    [selectedSpaceId]
   );
 
   usePendingInvite({ connected, spacesLoaded, spaces, onSelectSpace: handleSelectSpace });
