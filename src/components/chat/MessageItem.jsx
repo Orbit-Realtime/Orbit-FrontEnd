@@ -2,7 +2,7 @@ import { memo } from "react";
 import { formatMessageTime } from "../../utils/formatTime";
 import MessageContentRenderer from "./MessageContentRenderer";
 
-function MessageItem({ message, isMine, hideNickname }) {
+function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage }) {
   const { senderNickname, message: text, unreadMemberCount, createdDate, status } = message;
 
   const timeStr = formatMessageTime(createdDate);
@@ -21,6 +21,15 @@ function MessageItem({ message, isMine, hideNickname }) {
           <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
             {isSending ? "전송 중..." : isFailed ? "전송 실패" : timeStr}
           </span>
+          {isFailed && onRemoveFailedMessage && (
+            <button
+              onClick={() => onRemoveFailedMessage(message.clientMessageId)}
+              className="text-red-400/70 hover:text-red-400 text-xs leading-none"
+              aria-label="삭제"
+            >
+              삭제
+            </button>
+          )}
         </div>
         <div
           className={`max-w-[84%] bg-orbit-surface2 rounded-xl border shadow-card-orbit overflow-hidden px-3 py-2 text-orbit-text text-sm ${

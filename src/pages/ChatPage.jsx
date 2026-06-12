@@ -375,6 +375,11 @@ export default function ChatPage() {
     [messages, pendingMessages]
   );
 
+  // failed pending message를 화면에서 제거 (local-only, 서버 요청 없음)
+  const handleRemoveFailedMessage = useCallback((clientMessageId) => {
+    setPendingMessages((prev) => removePendingByClientMessageId(prev, clientMessageId));
+  }, []);
+
   // 채팅방 나가기
   const handleLeaveRoom = useCallback(async () => {
     if (!selectedSpaceId) return;
@@ -486,6 +491,7 @@ export default function ChatPage() {
               onToggleMembers={handleToggleMembers}
               onOpenDiscussion={handleOpenDiscussion}
               activeDiscussionChatId={activeDiscussionChatId}
+              onRemoveFailedMessage={handleRemoveFailedMessage}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-orbit-subtle">

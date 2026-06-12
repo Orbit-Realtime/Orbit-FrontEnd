@@ -5,7 +5,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId }) {
+export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId, onRemoveFailedMessage }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -287,6 +287,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                       message={msg}
                       isMine={msg.senderId === auth?.memberId}
                       hideNickname={isConsecutive(msg, idx)}
+                      onRemoveFailedMessage={onRemoveFailedMessage}
                     />
                     {onOpenDiscussion && !msg.isTemporary && (
                       <div className={`mt-0.5 flex ${msg.senderId === auth?.memberId ? "justify-end" : "justify-start"}`}>
