@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
 import { usePendingInvite } from "../hooks/usePendingInvite";
 import { useSpaces } from "../hooks/useSpaces";
@@ -18,6 +19,8 @@ import WsErrorBanner from "../components/chat/WsErrorBanner";
 import ChatSidebar from "../components/chat/ChatSidebar";
 
 export default function ChatPage() {
+  const { auth } = useAuth();
+
   // UI 상태
   // null | { type: "members" } | { type: "discussion", message }
   const [panelState, setPanelState] = useState(null);
@@ -32,6 +35,8 @@ export default function ChatPage() {
   const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
   const [messages, setMessages] = useState([]);
+  // FE에서만 존재하는 전송 중 메시지 (echo reconciliation 이전 단계, clientMessageId로 식별)
+  const [pendingMessages, setPendingMessages] = useState([]);
   const [lastReadMessageId, setLastReadMessageId] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState(false);
@@ -149,6 +154,7 @@ export default function ChatPage() {
         if (spaceId !== null) {
           memberLastReadRef.current = {};
           setMessages([]);
+          setPendingMessages([]);
           setIsLoadingMore(false);
           setHistoryLoading(true);
           setHistoryError(false);
@@ -229,6 +235,7 @@ export default function ChatPage() {
       memberLastReadRef.current = {};
       setSelectedSpaceId(spaceId);
       setMessages([]);
+      setPendingMessages([]);
       setLastReadMessageId(null);
       setHasMore(false);
       setOldestChatId(null);
@@ -311,9 +318,31 @@ export default function ChatPage() {
   // 메시지 전송
   const handleSend = useCallback(
     (message) => {
-      sendChatMessage(selectedSpaceId, message);
+      const clientMessageId = crypto.randomUUID();
+
+      setPendingMessages((prev) => [
+        ...prev,
+        {
+          clientMessageId,
+          chatRoomId: selectedSpaceId,
+          message,
+          senderId: auth?.memberId,
+          senderNickname: auth?.nickname,
+          createdDate: new Date().toISOString(),
+          status: "sending",
+          isTemporary: true,
+        },
+      ]);
+
+      sendChatMessage(selectedSpaceId, message, clientMessageId);
     },
-    [selectedSpaceId, sendChatMessage]
+    [selectedSpaceId, sendChatMessage, auth]
+  );
+
+  // 서버 확정 메시지 + FE 전송 중 메시지를 합친 렌더링 목록
+  const renderMessages = useMemo(
+    () => [...messages, ...pendingMessages],
+    [messages, pendingMessages]
   );
 
   // 채팅방 나가기
@@ -410,7 +439,7 @@ export default function ChatPage() {
           {selectedSpaceId ? (
             <SpaceWindow
               space={selectedSpace}
-              messages={messages}
+              messages={renderMessages}
               lastReadMessageId={lastReadMessageId}
               onSend={handleSend}
               loading={historyLoading}

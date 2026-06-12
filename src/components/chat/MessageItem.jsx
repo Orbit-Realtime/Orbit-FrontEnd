@@ -3,9 +3,10 @@ import { formatMessageTime } from "../../utils/formatTime";
 import MessageContentRenderer from "./MessageContentRenderer";
 
 function MessageItem({ message, isMine, hideNickname }) {
-  const { senderNickname, message: text, unreadMemberCount, createdDate } = message;
+  const { senderNickname, message: text, unreadMemberCount, createdDate, status } = message;
 
   const timeStr = formatMessageTime(createdDate);
+  const isSending = status === "sending";
 
   if (isMine) {
     return (
@@ -16,9 +17,11 @@ function MessageItem({ message, isMine, hideNickname }) {
               {unreadMemberCount}
             </span>
           )}
-          <span className="text-orbit-muted text-xs leading-none">{timeStr}</span>
+          <span className="text-orbit-muted text-xs leading-none">
+            {isSending ? "전송 중..." : timeStr}
+          </span>
         </div>
-        <div className="max-w-[84%] bg-orbit-surface2 rounded-xl border border-orbit-border shadow-card-orbit overflow-hidden px-3 py-2 text-orbit-text text-sm">
+        <div className={`max-w-[84%] bg-orbit-surface2 rounded-xl border border-orbit-border shadow-card-orbit overflow-hidden px-3 py-2 text-orbit-text text-sm ${isSending ? "opacity-60" : ""}`}>
           <MessageContentRenderer content={text} />
         </div>
       </div>
