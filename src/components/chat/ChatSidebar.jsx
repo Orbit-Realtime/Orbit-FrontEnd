@@ -2,7 +2,7 @@ import UserHeader from "./UserHeader";
 import SpaceList from "./SpaceList";
 
 export default function ChatSidebar({
-  connected,
+  globalConnectionState,
   spaces,
   spacesError,
   onRetrySpaces,
@@ -14,7 +14,7 @@ export default function ChatSidebar({
     <div className="flex flex-col w-64 border-r border-orbit-border bg-orbit-sidebar orbit-sidebar-bg flex-shrink-0 relative z-10">
 
       {/* 사용자 헤더 */}
-      <UserHeader connected={connected} />
+      <UserHeader globalConnectionState={globalConnectionState} />
 
       {/* Space 목록 */}
       <div className="flex-1 overflow-hidden">

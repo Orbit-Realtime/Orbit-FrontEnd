@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { changeNickname } from "../../api/memberApi";
 import ChangePasswordModal from "./ChangePasswordModal";
 
-export default function UserHeader({ connected }) {
+export default function UserHeader({ globalConnectionState }) {
   const navigate = useNavigate();
   const { auth, signout, updateNickname } = useAuth();
 
@@ -64,8 +64,10 @@ export default function UserHeader({ connected }) {
             </button>
           )}
           <p className="flex items-center gap-1 text-xs text-orbit-subtle">
-            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${connected ? "bg-orbit-cyan/70" : "bg-orbit-border"}`} />
-            {connected ? "온라인" : "오프라인"}
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${globalConnectionState === "online" ? "bg-orbit-cyan/70" : "bg-orbit-border"}`} />
+            {globalConnectionState === "offline" && "오프라인"}
+            {globalConnectionState === "reconnecting" && "연결 중"}
+            {globalConnectionState === "online" && "온라인"}
           </p>
         </div>
         <button

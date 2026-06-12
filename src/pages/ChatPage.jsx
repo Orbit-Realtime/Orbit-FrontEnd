@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useDiscussionQueue } from "../hooks/useDiscussionQueue";
 import { usePendingInvite } from "../hooks/usePendingInvite";
 import { useSpaces } from "../hooks/useSpaces";
@@ -25,6 +25,9 @@ export default function ChatPage() {
 
   // 데이터 상태 — realtime 연동 (위치 유지)
   const [selectedSpaceId, setSelectedSpaceId] = useState(null);
+  const [online, setOnline] = useState(navigator.onLine);
+  // 현재 socket session 기준으로 ENTER_ROOM synchronization이 완료된 selectedSpaceId (enteredSpaceIdRef의 상태 버전)
+  const [enteredSpaceId, setEnteredSpaceId] = useState(null);
 
   const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
@@ -124,6 +127,18 @@ export default function ChatPage() {
   // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
 
+  // 브라우저 online/offline 상태 추적 (connectionState 계산용)
+  useEffect(() => {
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
   // 재연결 시 state recovery: WebSocket이 false→true로 바뀌면 상태 재동기화
   useEffect(() => {
     if (connected && !prevConnectedRef.current) {
@@ -169,6 +184,7 @@ export default function ChatPage() {
 
     if (selectedSpaceId === null) {
       enteredSpaceIdRef.current = null;
+      setEnteredSpaceId(null);
       return;
     }
 
@@ -178,13 +194,32 @@ export default function ChatPage() {
     notifyEntered(selectedSpaceId);
 
     enteredSpaceIdRef.current = selectedSpaceId;
+    setEnteredSpaceId(selectedSpaceId);
   }, [connected, selectedSpaceId, sendEnterRoom, notifyEntered]);
 
   useEffect(() => {
     if (!connected) {
       enteredSpaceIdRef.current = null;
+      setEnteredSpaceId(null);
     }
   }, [connected]);
+
+  // Space 메시지 전송 가능 여부를 나타내는 connection state
+  // offline: 네트워크 끊김 / reconnecting: 소켓 재연결 중 / synchronizing: ENTER_ROOM 동기화 중 / ready: 전송 가능
+  const connectionState = useMemo(() => {
+    if (!online) return "offline";
+    if (!connected) return "reconnecting";
+    if (selectedSpaceId !== null && enteredSpaceId !== selectedSpaceId) return "synchronizing";
+    return "ready";
+  }, [online, connected, selectedSpaceId, enteredSpaceId]);
+
+  // 좌측 상단 UserHeader 등 앱 전체 네트워크/소켓 상태를 나타내는 global connection state
+  // (ENTER_ROOM synchronization 여부는 보지 않음)
+  const globalConnectionState = useMemo(() => {
+    if (!online) return "offline";
+    if (!connected) return "reconnecting";
+    return "online";
+  }, [online, connected]);
 
   // 채팅방 선택
   const handleSelectSpace = useCallback(
@@ -361,7 +396,7 @@ export default function ChatPage() {
       <div className="flex flex-1 overflow-hidden relative z-10">
 
         <ChatSidebar
-          connected={connected}
+          globalConnectionState={globalConnectionState}
           spaces={spaces}
           spacesError={spacesError}
           onRetrySpaces={refreshSpaces}
@@ -383,7 +418,7 @@ export default function ChatPage() {
               onBack={handleBack}
               onLeave={handleLeaveRoom}
               onRename={handleRenameRoom}
-              connected={connected}
+              connectionState={connectionState}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}

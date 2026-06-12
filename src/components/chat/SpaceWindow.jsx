@@ -5,7 +5,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connected, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId }) {
+export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -35,6 +35,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
   const handleSend = () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+    if (connectionState !== "ready") return;
     onSend(trimmed);
     setText("");
     if (textareaRef.current) {
@@ -351,12 +352,29 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
 
         {/* 입력창 */}
         <div className="flex-shrink-0 px-4 py-3 border-t border-orbit-border">
-          {!connected && (
-            <p className="text-xs text-red-400 mb-2 text-center">
-              연결이 끊어져 메시지를 전송할 수 없습니다.
-            </p>
+          {connectionState !== "ready" && (
+            <div className={`text-xs mb-2 text-center leading-snug ${
+              connectionState === "offline"
+                ? "text-red-400"
+                : connectionState === "reconnecting"
+                ? "text-yellow-400"
+                : "text-orbit-cyan"
+            }`}>
+              {connectionState === "offline" && (
+                <>
+                  <p className="font-medium">오프라인 상태입니다.</p>
+                  <p className="text-orbit-subtle mt-0.5">연결이 복구되면 다시 전송할 수 있습니다.</p>
+                </>
+              )}
+              {connectionState === "reconnecting" && <p>서버와 다시 연결하는 중입니다...</p>}
+              {connectionState === "synchronizing" && <p>채팅방 연결 준비 중입니다...</p>}
+            </div>
           )}
-          <div className="flex items-center gap-2 bg-orbit-surface2 rounded-xl border border-orbit-border focus-within:border-orbit-border-strong px-4 py-2.5">
+          <div className={`flex items-center gap-2 bg-orbit-surface2 rounded-xl border px-4 py-2.5 transition-colors ${
+            connectionState === "ready"
+              ? "border-orbit-border focus-within:border-orbit-border-strong"
+              : "border-orbit-border/50 opacity-70"
+          }`}>
             <textarea
               ref={textareaRef}
               value={text}
@@ -364,15 +382,15 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
               onKeyDown={handleKeyDown}
               onCompositionStart={() => { isComposingRef.current = true; }}
               onCompositionEnd={() => { isComposingRef.current = false; }}
-              placeholder={connected ? "메시지를 입력하세요" : "연결 중..."}
-              disabled={!connected}
+              placeholder="메시지를 입력하세요"
               rows={1}
-              className="flex-1 bg-transparent text-orbit-text text-sm placeholder:text-orbit-subtle resize-none outline-none max-h-32 leading-5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent text-orbit-text text-sm placeholder:text-orbit-subtle resize-none outline-none max-h-32 leading-5"
             />
             <button
               onClick={handleSend}
-              disabled={!text.trim() || !connected}
-              className="flex-shrink-0 w-8 h-8 rounded-lg bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-elevated text-orbit-bg disabled:text-orbit-muted disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              disabled={!text.trim() || connectionState !== "ready"}
+              title={connectionState !== "ready" ? "전송 불가" : undefined}
+              className="flex-shrink-0 w-8 h-8 rounded-lg bg-orbit-cyan hover:bg-orbit-cyan/80 disabled:bg-orbit-elevated disabled:opacity-50 text-orbit-bg disabled:text-orbit-muted disabled:cursor-not-allowed transition-colors flex items-center justify-center"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current -rotate-90">
                 <path d="M2 21L23 12 2 3v7l15 2-15 2v7z" />
