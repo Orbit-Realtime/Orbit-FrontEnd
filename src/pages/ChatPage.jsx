@@ -8,7 +8,7 @@ import { useWebSocket } from "../socket/useWebSocket";
 import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
-import { mergeMessagesById, applyReadEvent, removePendingByClientMessageId } from "../utils/messageState";
+import { mergeMessagesById, applyReadEvent, removePendingByClientMessageId, markPendingMessageFailed } from "../utils/messageState";
 import SpaceWindow from "../components/chat/SpaceWindow";
 import MemberPanel from "../components/chat/MemberPanel";
 import DiscussionPanel from "../components/chat/DiscussionPanel";
@@ -17,6 +17,9 @@ import WorkspaceBackground from "../components/chat/WorkspaceBackground";
 import ReconnectBanner from "../components/chat/ReconnectBanner";
 import WsErrorBanner from "../components/chat/WsErrorBanner";
 import ChatSidebar from "../components/chat/ChatSidebar";
+
+// echo가 이 시간 내에 도착하지 않으면 pending message를 "failed"로 표시한다
+const MESSAGE_SEND_TIMEOUT_MS = 10000;
 
 export default function ChatPage() {
   const { auth } = useAuth();
@@ -61,6 +64,16 @@ export default function ChatPage() {
   const historyFetchIdRef = useRef(0);
   const memberLastReadRef = useRef({});
   const countedDiscussionMessageIdsRef = useRef(new Set());
+  // pending message의 send timeout 관리 (clientMessageId -> timeoutId)
+  const pendingTimeoutsRef = useRef(new Map());
+
+  // 등록된 모든 pending message timeout을 정리한다
+  const clearPendingTimeouts = useCallback(() => {
+    for (const timeoutId of pendingTimeoutsRef.current.values()) {
+      clearTimeout(timeoutId);
+    }
+    pendingTimeoutsRef.current.clear();
+  }, []);
 
   // WebSocket 수신 메시지 처리
   const handleMessage = useCallback(
@@ -68,6 +81,11 @@ export default function ChatPage() {
       switch (data.messageType) {
         case "CHAT_MESSAGE":
           if (data.chatRoomId === selectedSpaceIdRef.current) {
+            const timeoutId = pendingTimeoutsRef.current.get(data.clientMessageId);
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              pendingTimeoutsRef.current.delete(data.clientMessageId);
+            }
             setPendingMessages((prev) => removePendingByClientMessageId(prev, data.clientMessageId));
             setMessages((prev) => mergeMessagesById(prev, [data]));
           }
@@ -133,6 +151,9 @@ export default function ChatPage() {
   // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
 
+  // unmount 시 등록된 pending message timeout을 모두 정리
+  useEffect(() => () => clearPendingTimeouts(), [clearPendingTimeouts]);
+
   // 브라우저 online/offline 상태 추적 (connectionState 계산용)
   useEffect(() => {
     const goOnline = () => setOnline(true);
@@ -156,6 +177,7 @@ export default function ChatPage() {
           memberLastReadRef.current = {};
           setMessages([]);
           setPendingMessages([]);
+          clearPendingTimeouts();
           setIsLoadingMore(false);
           setHistoryLoading(true);
           setHistoryError(false);
@@ -184,7 +206,7 @@ export default function ChatPage() {
       isInitialConnectRef.current = false;
     }
     prevConnectedRef.current = connected;
-  }, [connected, refreshSpaces]);
+  }, [connected, refreshSpaces, clearPendingTimeouts]);
 
   useEffect(() => {
     if (!connected) return;
@@ -237,6 +259,7 @@ export default function ChatPage() {
       setSelectedSpaceId(spaceId);
       setMessages([]);
       setPendingMessages([]);
+      clearPendingTimeouts();
       setLastReadMessageId(null);
       setHasMore(false);
       setOldestChatId(null);
@@ -264,7 +287,7 @@ export default function ChatPage() {
           setHistoryLoading(false);
         });
     },
-    [selectedSpaceId]
+    [selectedSpaceId, clearPendingTimeouts]
   );
 
   usePendingInvite({ connected, spacesLoaded, spaces, onSelectSpace: handleSelectSpace });
@@ -334,6 +357,12 @@ export default function ChatPage() {
           isTemporary: true,
         },
       ]);
+
+      const timeoutId = setTimeout(() => {
+        pendingTimeoutsRef.current.delete(clientMessageId);
+        setPendingMessages((prev) => markPendingMessageFailed(prev, clientMessageId));
+      }, MESSAGE_SEND_TIMEOUT_MS);
+      pendingTimeoutsRef.current.set(clientMessageId, timeoutId);
 
       sendChatMessage(selectedSpaceId, message, clientMessageId);
     },

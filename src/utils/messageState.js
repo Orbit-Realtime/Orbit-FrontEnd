@@ -35,6 +35,24 @@ export function removePendingByClientMessageId(pendingMessages, clientMessageId)
 }
 
 /**
+ * clientMessageId와 일치하는 pending message의 status를 "sending"에서 "failed"로 변경한다.
+ *
+ * - status가 "sending"인 항목만 대상으로 한다 (이미 "failed"이거나 echo로 제거된 항목은 건드리지 않음, idempotent).
+ * - 일치하는 항목이 없으면 pendingMessages를 그대로 반환한다.
+ *
+ * @param {Array<{clientMessageId: string, status: string}>} pendingMessages
+ * @param {string} clientMessageId - timeout이 만료된 pending message의 clientMessageId
+ * @returns {Array<{clientMessageId: string, status: string}>}
+ */
+export function markPendingMessageFailed(pendingMessages, clientMessageId) {
+  return pendingMessages.map((p) =>
+    p.clientMessageId === clientMessageId && p.status === "sending"
+      ? { ...p, status: "failed" }
+      : p
+  );
+}
+
+/**
  * READ_EVENT를 받아 messages 배열에 unreadMemberCount 감소를 적용한다.
  *
  * 정책:

@@ -1,4 +1,4 @@
-import { mergeMessagesById, mergeDiscussionMessagesById, applyReadEvent, removePendingByClientMessageId } from '../../utils/messageState';
+import { mergeMessagesById, mergeDiscussionMessagesById, applyReadEvent, removePendingByClientMessageId, markPendingMessageFailed } from '../../utils/messageState';
 
 test('history 응답이 늦게 도착해도 동일 chatId 메시지는 중복되지 않는다', () => {
   // WS로 먼저 도착한 메시지가 READ_EVENT로 갱신된 상태
@@ -209,4 +209,75 @@ test('같은 clientMessageId로 반복 호출해도 안전하다 (idempotent)', 
   expect(once).toHaveLength(1);
   expect(twice).toHaveLength(1);
   expect(twice[0].clientMessageId).toBe('uuid-2');
+});
+
+// ── markPendingMessageFailed ────────────────────────────────────────────────
+
+test('일치하는 clientMessageId의 sending 상태가 failed로 변경된다', () => {
+  const pendingMessages = [
+    { clientMessageId: 'uuid-1', message: 'hello', status: 'sending' },
+    { clientMessageId: 'uuid-2', message: 'world', status: 'sending' },
+  ];
+
+  const result = markPendingMessageFailed(pendingMessages, 'uuid-1');
+
+  expect(result[0].status).toBe('failed');
+  expect(result[1].status).toBe('sending');
+});
+
+test('일치하는 clientMessageId가 없으면 변화 없다', () => {
+  const pendingMessages = [
+    { clientMessageId: 'uuid-1', message: 'hello', status: 'sending' },
+  ];
+
+  const result = markPendingMessageFailed(pendingMessages, 'uuid-999');
+
+  expect(result).toEqual(pendingMessages);
+});
+
+test('이미 failed인 항목은 다시 호출해도 변하지 않는다 (idempotent)', () => {
+  const pendingMessages = [
+    { clientMessageId: 'uuid-1', message: 'hello', status: 'failed' },
+  ];
+
+  const result = markPendingMessageFailed(pendingMessages, 'uuid-1');
+
+  expect(result[0].status).toBe('failed');
+  expect(result).toEqual(pendingMessages);
+});
+
+test('failed로 변경되어도 다른 필드는 보존된다', () => {
+  const pendingMessages = [
+    {
+      clientMessageId: 'uuid-1',
+      message: 'hello',
+      status: 'sending',
+      senderId: 42,
+      senderNickname: 'me',
+      isTemporary: true,
+    },
+  ];
+
+  const result = markPendingMessageFailed(pendingMessages, 'uuid-1');
+
+  expect(result[0]).toEqual({
+    clientMessageId: 'uuid-1',
+    message: 'hello',
+    status: 'failed',
+    senderId: 42,
+    senderNickname: 'me',
+    isTemporary: true,
+  });
+});
+
+test('failed 상태의 pending도 removePendingByClientMessageId로 제거할 수 있다', () => {
+  const pendingMessages = [
+    { clientMessageId: 'uuid-1', message: 'hello', status: 'failed' },
+    { clientMessageId: 'uuid-2', message: 'world', status: 'sending' },
+  ];
+
+  const result = removePendingByClientMessageId(pendingMessages, 'uuid-1');
+
+  expect(result).toHaveLength(1);
+  expect(result[0].clientMessageId).toBe('uuid-2');
 });

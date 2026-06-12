@@ -7,6 +7,7 @@ function MessageItem({ message, isMine, hideNickname }) {
 
   const timeStr = formatMessageTime(createdDate);
   const isSending = status === "sending";
+  const isFailed = status === "failed";
 
   if (isMine) {
     return (
@@ -17,11 +18,15 @@ function MessageItem({ message, isMine, hideNickname }) {
               {unreadMemberCount}
             </span>
           )}
-          <span className="text-orbit-muted text-xs leading-none">
-            {isSending ? "전송 중..." : timeStr}
+          <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
+            {isSending ? "전송 중..." : isFailed ? "전송 실패" : timeStr}
           </span>
         </div>
-        <div className={`max-w-[84%] bg-orbit-surface2 rounded-xl border border-orbit-border shadow-card-orbit overflow-hidden px-3 py-2 text-orbit-text text-sm ${isSending ? "opacity-60" : ""}`}>
+        <div
+          className={`max-w-[84%] bg-orbit-surface2 rounded-xl border shadow-card-orbit overflow-hidden px-3 py-2 text-orbit-text text-sm ${
+            isFailed ? "border-red-400/50" : "border-orbit-border"
+          } ${isSending ? "opacity-60" : ""}`}
+        >
           <MessageContentRenderer content={text} />
         </div>
       </div>
