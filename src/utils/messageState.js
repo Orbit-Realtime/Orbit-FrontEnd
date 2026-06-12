@@ -20,6 +20,21 @@ export function mergeMessagesById(prev, incoming) {
 }
 
 /**
+ * 서버 echo의 clientMessageId와 일치하는 pending message를 제거한다.
+ *
+ * - clientMessageId가 없으면 pendingMessages를 그대로 반환한다.
+ * - 일치하는 항목이 없어도 안전하게 동작한다 (idempotent).
+ *
+ * @param {Array<{clientMessageId: string}>} pendingMessages
+ * @param {string|null|undefined} clientMessageId - 서버 echo의 clientMessageId
+ * @returns {Array<{clientMessageId: string}>}
+ */
+export function removePendingByClientMessageId(pendingMessages, clientMessageId) {
+  if (!clientMessageId) return pendingMessages;
+  return pendingMessages.filter((p) => p.clientMessageId !== clientMessageId);
+}
+
+/**
  * READ_EVENT를 받아 messages 배열에 unreadMemberCount 감소를 적용한다.
  *
  * 정책:

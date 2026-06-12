@@ -8,7 +8,7 @@ import { useWebSocket } from "../socket/useWebSocket";
 import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
-import { mergeMessagesById, applyReadEvent } from "../utils/messageState";
+import { mergeMessagesById, applyReadEvent, removePendingByClientMessageId } from "../utils/messageState";
 import SpaceWindow from "../components/chat/SpaceWindow";
 import MemberPanel from "../components/chat/MemberPanel";
 import DiscussionPanel from "../components/chat/DiscussionPanel";
@@ -68,6 +68,7 @@ export default function ChatPage() {
       switch (data.messageType) {
         case "CHAT_MESSAGE":
           if (data.chatRoomId === selectedSpaceIdRef.current) {
+            setPendingMessages((prev) => removePendingByClientMessageId(prev, data.clientMessageId));
             setMessages((prev) => mergeMessagesById(prev, [data]));
           }
           break;
