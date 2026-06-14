@@ -2,7 +2,7 @@ import { memo } from "react";
 import { formatMessageTime } from "../../utils/formatTime";
 import MessageContentRenderer from "./MessageContentRenderer";
 
-function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage }) {
+function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage, onRetryMessage, canRetry }) {
   const { senderNickname, message: text, unreadMemberCount, createdDate, status } = message;
 
   const timeStr = formatMessageTime(createdDate);
@@ -21,6 +21,17 @@ function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage }) {
           <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
             {isSending ? "전송 중..." : isFailed ? "전송 실패" : timeStr}
           </span>
+          {isFailed && onRetryMessage && (
+            <button
+              onClick={() => onRetryMessage(message.clientMessageId)}
+              disabled={!canRetry}
+              title={!canRetry ? "연결이 준비되면 재시도할 수 있습니다." : undefined}
+              className="text-orbit-cyan/70 hover:text-orbit-cyan text-xs leading-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-orbit-cyan/70"
+              aria-label="재시도"
+            >
+              재시도
+            </button>
+          )}
           {isFailed && onRemoveFailedMessage && (
             <button
               onClick={() => onRemoveFailedMessage(message.clientMessageId)}

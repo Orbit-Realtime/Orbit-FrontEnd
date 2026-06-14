@@ -1,4 +1,4 @@
-import { mergeMessagesById, mergeDiscussionMessagesById, applyReadEvent, removePendingByClientMessageId, markPendingMessageFailed } from '../../utils/messageState';
+import { mergeMessagesById, mergeDiscussionMessagesById, applyReadEvent, removePendingByClientMessageId, markPendingMessageFailed, markPendingMessageSending } from '../../utils/messageState';
 
 test('history 응답이 늦게 도착해도 동일 chatId 메시지는 중복되지 않는다', () => {
   // WS로 먼저 도착한 메시지가 READ_EVENT로 갱신된 상태
@@ -280,4 +280,63 @@ test('failed 상태의 pending도 removePendingByClientMessageId로 제거할 �
 
   expect(result).toHaveLength(1);
   expect(result[0].clientMessageId).toBe('uuid-2');
+});
+
+// ── markPendingMessageSending ──────────────────────────────────────────────
+
+test('일치하는 clientMessageId의 failed 상태가 sending으로 변경된다', () => {
+  const pendingMessages = [
+    { clientMessageId: 'uuid-1', message: 'hello', status: 'failed' },
+    { clientMessageId: 'uuid-2', message: 'world', status: 'sending' },
+  ];
+
+  const result = markPendingMessageSending(pendingMessages, 'uuid-1');
+
+  expect(result[0].status).toBe('sending');
+  expect(result[1].status).toBe('sending');
+});
+
+test('일치하는 clientMessageId가 없으면 sending으로 변화 없다', () => {
+  const pendingMessages = [
+    { clientMessageId: 'uuid-1', message: 'hello', status: 'failed' },
+  ];
+
+  const result = markPendingMessageSending(pendingMessages, 'uuid-999');
+
+  expect(result).toEqual(pendingMessages);
+});
+
+test('이미 sending인 항목은 다시 호출해도 변하지 않는다 (idempotent)', () => {
+  const pendingMessages = [
+    { clientMessageId: 'uuid-1', message: 'hello', status: 'sending' },
+  ];
+
+  const result = markPendingMessageSending(pendingMessages, 'uuid-1');
+
+  expect(result[0].status).toBe('sending');
+  expect(result).toEqual(pendingMessages);
+});
+
+test('sending으로 변경되어도 다른 필드는 보존된다', () => {
+  const pendingMessages = [
+    {
+      clientMessageId: 'uuid-1',
+      message: 'hello',
+      status: 'failed',
+      senderId: 42,
+      senderNickname: 'me',
+      isTemporary: true,
+    },
+  ];
+
+  const result = markPendingMessageSending(pendingMessages, 'uuid-1');
+
+  expect(result[0]).toEqual({
+    clientMessageId: 'uuid-1',
+    message: 'hello',
+    status: 'sending',
+    senderId: 42,
+    senderNickname: 'me',
+    isTemporary: true,
+  });
 });

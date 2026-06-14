@@ -8,7 +8,7 @@ import { useWebSocket } from "../socket/useWebSocket";
 import { useSpaceActivity } from "../socket/useSpaceActivity";
 import { leaveSpace, renameSpace } from "../api/spaceApi";
 import { getMessageHistory } from "../api/messageApi";
-import { mergeMessagesById, applyReadEvent, removePendingByClientMessageId, markPendingMessageFailed } from "../utils/messageState";
+import { mergeMessagesById, applyReadEvent, removePendingByClientMessageId, markPendingMessageFailed, markPendingMessageSending } from "../utils/messageState";
 import SpaceWindow from "../components/chat/SpaceWindow";
 import MemberPanel from "../components/chat/MemberPanel";
 import DiscussionPanel from "../components/chat/DiscussionPanel";
@@ -339,6 +339,20 @@ export default function ChatPage() {
       });
   }, [selectedSpaceId]);
 
+  // echo 미수신 시 pending message를 "failed"로 전환하는 send timeout을 등록한다 (handleSend/handleRetryMessage 공용)
+  const registerPendingTimeout = useCallback((clientMessageId) => {
+    const existingTimeoutId = pendingTimeoutsRef.current.get(clientMessageId);
+    if (existingTimeoutId) {
+      clearTimeout(existingTimeoutId);
+    }
+
+    const timeoutId = setTimeout(() => {
+      pendingTimeoutsRef.current.delete(clientMessageId);
+      setPendingMessages((prev) => markPendingMessageFailed(prev, clientMessageId));
+    }, MESSAGE_SEND_TIMEOUT_MS);
+    pendingTimeoutsRef.current.set(clientMessageId, timeoutId);
+  }, []);
+
   // 메시지 전송
   const handleSend = useCallback(
     (message) => {
@@ -358,15 +372,28 @@ export default function ChatPage() {
         },
       ]);
 
-      const timeoutId = setTimeout(() => {
-        pendingTimeoutsRef.current.delete(clientMessageId);
-        setPendingMessages((prev) => markPendingMessageFailed(prev, clientMessageId));
-      }, MESSAGE_SEND_TIMEOUT_MS);
-      pendingTimeoutsRef.current.set(clientMessageId, timeoutId);
+      registerPendingTimeout(clientMessageId);
 
       sendChatMessage(selectedSpaceId, message, clientMessageId);
     },
-    [selectedSpaceId, sendChatMessage, auth]
+    [selectedSpaceId, sendChatMessage, auth, registerPendingTimeout]
+  );
+
+  // failed pending message를 재시도: 같은 clientMessageId로 sendChatMessage를 재호출하고 status를 "sending"으로 되돌린다
+  const handleRetryMessage = useCallback(
+    (clientMessageId) => {
+      if (connectionState !== "ready") return;
+
+      const target = pendingMessages.find(
+        (p) => p.clientMessageId === clientMessageId && p.status === "failed"
+      );
+      if (!target) return;
+
+      setPendingMessages((prev) => markPendingMessageSending(prev, clientMessageId));
+      registerPendingTimeout(clientMessageId);
+      sendChatMessage(target.chatRoomId, target.message, clientMessageId);
+    },
+    [connectionState, pendingMessages, sendChatMessage, registerPendingTimeout]
   );
 
   // 서버 확정 메시지 + FE 전송 중 메시지를 합친 렌더링 목록
@@ -492,6 +519,7 @@ export default function ChatPage() {
               onOpenDiscussion={handleOpenDiscussion}
               activeDiscussionChatId={activeDiscussionChatId}
               onRemoveFailedMessage={handleRemoveFailedMessage}
+              onRetryMessage={handleRetryMessage}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-orbit-subtle">
