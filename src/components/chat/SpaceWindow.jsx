@@ -5,7 +5,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId }) {
+export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId, onRemoveFailedMessage, onRetryMessage }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -142,6 +142,8 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
   const isConsecutive = (msg, idx) =>
     idx > 0 && messages[idx - 1].senderId === msg.senderId;
 
+  const canRetry = connectionState === "ready";
+
   return (
     <div className="relative flex h-full overflow-hidden">
       {/* 메인 채팅 영역 */}
@@ -272,7 +274,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                 {messages.map((msg, idx) => {
                   const isActiveDiscussion = msg.chatId === activeDiscussionChatId;
                   return (
-                <div key={msg.chatId}>
+                <div key={msg.chatId ?? msg.clientMessageId}>
                   {showDateDividerBefore(msg, idx) && (
                     <div className="flex items-center gap-2 my-3">
                       <div className="flex-1 h-px bg-orbit-border" />
@@ -287,8 +289,11 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                       message={msg}
                       isMine={msg.senderId === auth?.memberId}
                       hideNickname={isConsecutive(msg, idx)}
+                      onRemoveFailedMessage={onRemoveFailedMessage}
+                      onRetryMessage={onRetryMessage}
+                      canRetry={canRetry}
                     />
-                    {onOpenDiscussion && (
+                    {onOpenDiscussion && !msg.isTemporary && (
                       <div className={`mt-0.5 flex ${msg.senderId === auth?.memberId ? "justify-end" : "justify-start"}`}>
                         {msg.discussionId && msg.discussionMessageCount > 0 ? (
                           <button

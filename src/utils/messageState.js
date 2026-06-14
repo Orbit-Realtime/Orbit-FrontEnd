@@ -20,6 +20,57 @@ export function mergeMessagesById(prev, incoming) {
 }
 
 /**
+ * 서버 echo의 clientMessageId와 일치하는 pending message를 제거한다.
+ *
+ * - clientMessageId가 없으면 pendingMessages를 그대로 반환한다.
+ * - 일치하는 항목이 없어도 안전하게 동작한다 (idempotent).
+ *
+ * @param {Array<{clientMessageId: string}>} pendingMessages
+ * @param {string|null|undefined} clientMessageId - 서버 echo의 clientMessageId
+ * @returns {Array<{clientMessageId: string}>}
+ */
+export function removePendingByClientMessageId(pendingMessages, clientMessageId) {
+  if (!clientMessageId) return pendingMessages;
+  return pendingMessages.filter((p) => p.clientMessageId !== clientMessageId);
+}
+
+/**
+ * clientMessageId와 일치하는 pending message의 status를 "sending"에서 "failed"로 변경한다.
+ *
+ * - status가 "sending"인 항목만 대상으로 한다 (이미 "failed"이거나 echo로 제거된 항목은 건드리지 않음, idempotent).
+ * - 일치하는 항목이 없으면 pendingMessages를 그대로 반환한다.
+ *
+ * @param {Array<{clientMessageId: string, status: string}>} pendingMessages
+ * @param {string} clientMessageId - timeout이 만료된 pending message의 clientMessageId
+ * @returns {Array<{clientMessageId: string, status: string}>}
+ */
+export function markPendingMessageFailed(pendingMessages, clientMessageId) {
+  return pendingMessages.map((p) =>
+    p.clientMessageId === clientMessageId && p.status === "sending"
+      ? { ...p, status: "failed" }
+      : p
+  );
+}
+
+/**
+ * clientMessageId와 일치하는 pending message의 status를 "failed"에서 "sending"으로 변경한다.
+ *
+ * - status가 "failed"인 항목만 대상으로 한다 (이미 "sending"이거나 일치하는 항목이 없으면 변화 없음, idempotent).
+ * - 일치하는 항목이 없으면 pendingMessages를 그대로 반환한다.
+ *
+ * @param {Array<{clientMessageId: string, status: string}>} pendingMessages
+ * @param {string} clientMessageId - 재시도할 pending message의 clientMessageId
+ * @returns {Array<{clientMessageId: string, status: string}>}
+ */
+export function markPendingMessageSending(pendingMessages, clientMessageId) {
+  return pendingMessages.map((p) =>
+    p.clientMessageId === clientMessageId && p.status === "failed"
+      ? { ...p, status: "sending" }
+      : p
+  );
+}
+
+/**
  * READ_EVENT를 받아 messages 배열에 unreadMemberCount 감소를 적용한다.
  *
  * 정책:

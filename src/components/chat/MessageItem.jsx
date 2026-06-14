@@ -2,10 +2,12 @@ import { memo } from "react";
 import { formatMessageTime } from "../../utils/formatTime";
 import MessageContentRenderer from "./MessageContentRenderer";
 
-function MessageItem({ message, isMine, hideNickname }) {
-  const { senderNickname, message: text, unreadMemberCount, createdDate } = message;
+function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage, onRetryMessage, canRetry }) {
+  const { senderNickname, message: text, unreadMemberCount, createdDate, status } = message;
 
   const timeStr = formatMessageTime(createdDate);
+  const isSending = status === "sending";
+  const isFailed = status === "failed";
 
   if (isMine) {
     return (
@@ -16,9 +18,35 @@ function MessageItem({ message, isMine, hideNickname }) {
               {unreadMemberCount}
             </span>
           )}
-          <span className="text-orbit-muted text-xs leading-none">{timeStr}</span>
+          <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
+            {isSending ? "전송 중..." : isFailed ? "전송 실패" : timeStr}
+          </span>
+          {isFailed && onRetryMessage && (
+            <button
+              onClick={() => onRetryMessage(message.clientMessageId)}
+              disabled={!canRetry}
+              title={!canRetry ? "연결이 준비되면 재시도할 수 있습니다." : undefined}
+              className="text-orbit-cyan/70 hover:text-orbit-cyan text-xs leading-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-orbit-cyan/70"
+              aria-label="재시도"
+            >
+              재시도
+            </button>
+          )}
+          {isFailed && onRemoveFailedMessage && (
+            <button
+              onClick={() => onRemoveFailedMessage(message.clientMessageId)}
+              className="text-red-400/70 hover:text-red-400 text-xs leading-none"
+              aria-label="삭제"
+            >
+              삭제
+            </button>
+          )}
         </div>
-        <div className="max-w-[84%] bg-orbit-surface2 rounded-xl border border-orbit-border shadow-card-orbit overflow-hidden px-3 py-2 text-orbit-text text-sm">
+        <div
+          className={`max-w-[84%] bg-orbit-surface2 rounded-xl border shadow-card-orbit overflow-hidden px-3 py-2 text-orbit-text text-sm ${
+            isFailed ? "border-red-400/50" : "border-orbit-border"
+          } ${isSending ? "opacity-60" : ""}`}
+        >
           <MessageContentRenderer content={text} />
         </div>
       </div>

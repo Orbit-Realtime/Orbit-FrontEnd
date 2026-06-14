@@ -82,10 +82,10 @@ export function useWebSocket(onMessage, onConnected) {
     );
   }, []);
 
-  const sendChatMessage = useCallback((chatRoomId, message) => {
+  const sendChatMessage = useCallback((chatRoomId, message, clientMessageId) => {
     if (socketRef.current?.readyState !== WebSocket.OPEN) return;
     socketRef.current.send(
-      JSON.stringify({ messageType: "CHAT_MESSAGE", chatRoomId, message })
+      JSON.stringify({ messageType: "CHAT_MESSAGE", chatRoomId, message, clientMessageId })
     );
   }, []);
 
