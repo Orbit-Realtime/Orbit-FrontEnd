@@ -151,14 +151,17 @@ export default function ChatPage() {
           notifyEnteredRef.current(data.chatRoomId);
           break;
 
-        case "ERROR":
+        case "ERROR": {
           console.warn("WS ERROR", {
             requestType: data.requestType,
             errorCode: data.errorCode,
             chatRoomId: data.chatRoomId,
           });
 
-          if (data.requestType === "ENTER_ROOM" && data.chatRoomId === selectedSpaceIdRef.current) {
+          const isEnterRoomError =
+            data.requestType === "ENTER_ROOM" && data.chatRoomId === selectedSpaceIdRef.current;
+
+          if (isEnterRoomError) {
             pendingEnterRoomSpaceIdRef.current = null;
             enteredSpaceIdRef.current = null;
             setEnteredSpaceId(null);
@@ -167,13 +170,50 @@ export default function ChatPage() {
           }
 
           setWsError(data.message);
+
+          // 서버는 비참여자도 ROOM_NOT_FOUND로 내려줄 수 있으므로, FE에서는 ROOM_NOT_FOUND/FORBIDDEN을 접근 불가 계열로 취급해
+          // Space 목록을 다시 조회하고 실제로 사라졌는지 확인한다 (그 외 errorCode는 공통 처리만 적용)
+          if (isEnterRoomError && (data.errorCode === "ROOM_NOT_FOUND" || data.errorCode === "FORBIDDEN")) {
+            const erroredSpaceId = data.chatRoomId;
+
+            refreshSpaces().then((refreshedSpaces) => {
+              // refresh가 끝나기 전에 다른 Space로 이동했으면 이 결과는 더 이상 유효하지 않다
+              if (selectedSpaceIdRef.current !== erroredSpaceId) return;
+              // refresh 자체가 실패하면 접근 가능 여부를 판단할 수 없으므로 기존 재시도 UI를 그대로 둔다
+              if (refreshedSpaces === null) return;
+
+              const stillAccessible = refreshedSpaces.some((s) => s.chatRoomId === erroredSpaceId);
+              if (stillAccessible) return; // 여전히 접근 가능 — enterRoomFailed=true 유지, 재시도 버튼 노출 그대로
+
+              // 목록에서 사라짐 — 더 이상 접근할 수 없는 Space
+              setSelectedSpaceId(null);
+              setMessages([]);
+              setPendingMessages([]);
+              clearPendingTimeouts();
+              setPanelState(null);
+              clearDiscussionEvents();
+              setEnterRoomFailed(false);
+              setWsError("더 이상 접근할 수 없는 공간입니다.");
+            });
+          }
+
           break;
+        }
 
         default:
           break;
       }
     },
-    [applySpaceUpdate, appendDiscussionEvent, setWsError, setEnteredSpaceId, setEnterRoomFailed]
+    [
+      applySpaceUpdate,
+      appendDiscussionEvent,
+      setWsError,
+      setEnteredSpaceId,
+      setEnterRoomFailed,
+      refreshSpaces,
+      clearPendingTimeouts,
+      clearDiscussionEvents,
+    ]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
