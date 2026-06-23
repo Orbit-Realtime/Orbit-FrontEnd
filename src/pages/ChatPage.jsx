@@ -169,7 +169,12 @@ export default function ChatPage() {
             setEnterRoomFailed(true);
           }
 
-          setWsError(data.message);
+          // INTERNAL_ERROR는 권한/목록 문제가 아니라 서버 내부 처리 실패다 — BE 원문은 "재시도해도 되는지"가 불명확해 FE에서만 문구를 보완한다
+          if (isEnterRoomError && data.errorCode === "INTERNAL_ERROR") {
+            setWsError("일시적인 오류로 채팅방 입장에 실패했습니다. 다시 시도해주세요.");
+          } else {
+            setWsError(data.message);
+          }
 
           // 서버는 비참여자도 ROOM_NOT_FOUND로 내려줄 수 있으므로, FE에서는 ROOM_NOT_FOUND/FORBIDDEN을 접근 불가 계열로 취급해
           // Space 목록을 다시 조회하고 실제로 사라졌는지 확인한다 (그 외 errorCode는 공통 처리만 적용)
