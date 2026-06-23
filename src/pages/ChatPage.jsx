@@ -170,8 +170,12 @@ export default function ChatPage() {
             setEnteredSpaceId(null);
             // 재시도 UI 노출 — 사용자가 명시적으로 재시도하기 전까지 유지된다 (자동 재시도 없음)
             setEnterRoomFailed(true);
-            // INVALID_REQUEST(FE 요청/프로토콜 오류)는 같은 요청을 다시 보내도 성공할 가능성이 낮으므로 재시도 버튼을 숨긴다
-            setEnterRoomRetryable(data.errorCode !== "INVALID_REQUEST");
+            // INVALID_REQUEST(FE 요청/프로토콜 오류), UNAUTHORIZED(로그인 만료)는 같은 요청을 다시 보내도
+            // 성공할 가능성이 낮으므로 재시도 버튼을 숨긴다
+            setEnterRoomRetryable(
+              data.errorCode !== "INVALID_REQUEST" &&
+              data.errorCode !== "UNAUTHORIZED"
+            );
           }
 
           // INTERNAL_ERROR는 권한/목록 문제가 아니라 서버 내부 처리 실패다 — BE 원문은 "재시도해도 되는지"가 불명확해 FE에서만 문구를 보완한다
@@ -179,6 +183,9 @@ export default function ChatPage() {
             setWsError("일시적인 오류로 채팅방 입장에 실패했습니다. 다시 시도해주세요.");
           } else if (isEnterRoomError && data.errorCode === "INVALID_REQUEST") {
             setWsError("방에 입장할 수 없습니다. 새로고침 후 다시 시도해주세요.");
+          } else if (isEnterRoomError && data.errorCode === "UNAUTHORIZED") {
+            // 지금은 안내만 한다 — 자동 로그아웃/페이지 이동은 별도 작업에서 다룬다
+            setWsError("로그인이 만료되었습니다. 다시 로그인해주세요.");
           } else {
             setWsError(data.message);
           }
