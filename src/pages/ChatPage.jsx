@@ -36,6 +36,8 @@ export default function ChatPage() {
   const [enteredSpaceId, setEnteredSpaceId] = useState(null);
   // 현재 selectedSpaceId에 대한 ENTER_ROOM이 ERROR로 실패해 재시도 UI를 보여줘야 하는지. wsError(4초 후 자동 소멸)와 독립적으로 유지된다.
   const [enterRoomFailed, setEnterRoomFailed] = useState(false);
+  // enterRoomFailed=true인 실패 중에서 "다시 보내면 성공할 가능성이 있는지". INVALID_REQUEST(FE 요청/프로토콜 오류)처럼 같은 요청을 반복해도 성공할 수 없는 경우에만 false가 된다.
+  const [enterRoomRetryable, setEnterRoomRetryable] = useState(true);
 
   const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
@@ -147,6 +149,7 @@ export default function ChatPage() {
           enteredSpaceIdRef.current = data.chatRoomId;
           setEnteredSpaceId(data.chatRoomId);
           setEnterRoomFailed(false);
+          setEnterRoomRetryable(true);
           // ENTER_ROOM이 서버에서 active 등록까지 수행하므로, ACK로 확인된 이후에만 active로 간주한다
           notifyEnteredRef.current(data.chatRoomId);
           break;
@@ -167,11 +170,15 @@ export default function ChatPage() {
             setEnteredSpaceId(null);
             // 재시도 UI 노출 — 사용자가 명시적으로 재시도하기 전까지 유지된다 (자동 재시도 없음)
             setEnterRoomFailed(true);
+            // INVALID_REQUEST(FE 요청/프로토콜 오류)는 같은 요청을 다시 보내도 성공할 가능성이 낮으므로 재시도 버튼을 숨긴다
+            setEnterRoomRetryable(data.errorCode !== "INVALID_REQUEST");
           }
 
           // INTERNAL_ERROR는 권한/목록 문제가 아니라 서버 내부 처리 실패다 — BE 원문은 "재시도해도 되는지"가 불명확해 FE에서만 문구를 보완한다
           if (isEnterRoomError && data.errorCode === "INTERNAL_ERROR") {
             setWsError("일시적인 오류로 채팅방 입장에 실패했습니다. 다시 시도해주세요.");
+          } else if (isEnterRoomError && data.errorCode === "INVALID_REQUEST") {
+            setWsError("방에 입장할 수 없습니다. 새로고침 후 다시 시도해주세요.");
           } else {
             setWsError(data.message);
           }
@@ -215,6 +222,7 @@ export default function ChatPage() {
       setWsError,
       setEnteredSpaceId,
       setEnterRoomFailed,
+      setEnterRoomRetryable,
       refreshSpaces,
       clearPendingTimeouts,
       clearDiscussionEvents,
@@ -312,6 +320,7 @@ export default function ChatPage() {
       enteredSpaceIdRef.current = null;
       setEnteredSpaceId(null);
       setEnterRoomFailed(false);
+      setEnterRoomRetryable(true);
       return;
     }
 
@@ -319,6 +328,7 @@ export default function ChatPage() {
 
     // 중복 전송 방지는 triggerEnterRoom 내부 가드가 단일하게 담당한다
     setEnterRoomFailed(false);
+    setEnterRoomRetryable(true);
     triggerEnterRoom(selectedSpaceId);
   }, [connected, selectedSpaceId, triggerEnterRoom]);
 
@@ -328,6 +338,7 @@ export default function ChatPage() {
       enteredSpaceIdRef.current = null;
       setEnteredSpaceId(null);
       setEnterRoomFailed(false);
+      setEnterRoomRetryable(true);
     }
   }, [connected]);
 
@@ -337,6 +348,7 @@ export default function ChatPage() {
     // 같은 메시지로 다시 실패해도 4초 배너가 온전히 재노출되도록 먼저 비운다 (useWsErrorBanner는 값이 바뀔 때만 타이머를 재시작함)
     setWsError(null);
     setEnterRoomFailed(false);
+    setEnterRoomRetryable(true);
     triggerEnterRoom(selectedSpaceId);
   }, [selectedSpaceId, connected, setWsError, triggerEnterRoom]);
 
@@ -618,6 +630,7 @@ export default function ChatPage() {
               onRename={handleRenameRoom}
               connectionState={connectionState}
               enterRoomFailed={enterRoomFailed}
+              enterRoomRetryable={enterRoomRetryable}
               onRetryEnterRoom={retryEnterRoom}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
