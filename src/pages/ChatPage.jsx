@@ -133,7 +133,16 @@ export default function ChatPage() {
           }
           break;
 
+        case "ENTER_ROOM_ACK":
+
+          break;
+
         case "ERROR":
+          console.warn("WS ERROR", {
+            requestType: data.requestType,
+            errorCode: data.errorCode,
+            chatRoomId: data.chatRoomId,
+          });
           setWsError(data.message);
           break;
 
