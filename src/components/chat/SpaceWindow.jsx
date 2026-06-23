@@ -5,7 +5,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId, onRemoveFailedMessage, onRetryMessage }) {
+export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, enterRoomFailed, onRetryEnterRoom, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId, onRemoveFailedMessage, onRetryMessage }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -143,6 +143,8 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
     idx > 0 && messages[idx - 1].senderId === msg.senderId;
 
   const canRetry = connectionState === "ready";
+  // ENTER_ROOM이 ERROR로 실패해 synchronizing에 머무는 동안에만 재시도 버튼을 보여준다 (ACK 대기 중에는 노출하지 않음)
+  const showEnterRoomRetry = connectionState === "synchronizing" && enterRoomFailed;
 
   return (
     <div className="relative flex h-full overflow-hidden">
@@ -372,7 +374,21 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                 </>
               )}
               {connectionState === "reconnecting" && <p>서버와 다시 연결하는 중입니다...</p>}
-              {connectionState === "synchronizing" && <p>채팅방 연결 준비 중입니다...</p>}
+              {connectionState === "synchronizing" && (
+                showEnterRoomRetry ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <p>채팅방 입장에 실패했습니다.</p>
+                    <button
+                      onClick={onRetryEnterRoom}
+                      className="text-orbit-cyan hover:text-orbit-text underline transition-colors"
+                    >
+                      다시 시도
+                    </button>
+                  </div>
+                ) : (
+                  <p>채팅방 연결 준비 중입니다...</p>
+                )
+              )}
             </div>
           )}
           <div className={`flex items-center gap-2 bg-orbit-surface2 rounded-xl border px-4 py-2.5 transition-colors ${

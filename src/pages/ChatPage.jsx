@@ -32,8 +32,10 @@ export default function ChatPage() {
   // 데이터 상태 — realtime 연동 (위치 유지)
   const [selectedSpaceId, setSelectedSpaceId] = useState(null);
   const [online, setOnline] = useState(navigator.onLine);
-  // 현재 socket session 기준으로 ENTER_ROOM synchronization이 완료된 selectedSpaceId (enteredSpaceIdRef의 상태 버전)
+  // 서버가 ENTER_ROOM_ACK로 입장을 확인한 selectedSpaceId (enteredSpaceIdRef의 상태 버전). ENTER_ROOM 전송만으로는 설정되지 않는다.
   const [enteredSpaceId, setEnteredSpaceId] = useState(null);
+  // 현재 selectedSpaceId에 대한 ENTER_ROOM이 ERROR로 실패해 재시도 UI를 보여줘야 하는지. wsError(4초 후 자동 소멸)와 독립적으로 유지된다.
+  const [enterRoomFailed, setEnterRoomFailed] = useState(false);
 
   const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
@@ -59,8 +61,12 @@ export default function ChatPage() {
   const selectedSpaceIdRef = useRef(null);
   const prevConnectedRef = useRef(false);
   const isInitialConnectRef = useRef(true);
-  // 현재 socket session 기준으로 ENTER_ROOM synchronization이 완료된 selectedSpaceId
+  // ENTER_ROOM_ACK를 수신해 서버가 입장을 확인한 selectedSpaceId
   const enteredSpaceIdRef = useRef(null);
+  // ENTER_ROOM을 보냈지만 아직 ACK/ERROR 응답을 받지 못한 spaceId (중복 전송 방지 + ACK/ERROR 매칭용)
+  const pendingEnterRoomSpaceIdRef = useRef(null);
+  // handleMessage(useCallback)가 useSpaceActivity보다 먼저 선언되어 notifyEntered를 직접 참조할 수 없으므로 ref로 우회한다
+  const notifyEnteredRef = useRef(() => {});
   const historyFetchIdRef = useRef(0);
   const memberLastReadRef = useRef({});
   const countedDiscussionMessageIdsRef = useRef(new Set());
@@ -134,7 +140,15 @@ export default function ChatPage() {
           break;
 
         case "ENTER_ROOM_ACK":
+          // 이미 다른 Space로 전환된 뒤 늦게 도착한 stale ACK는 무시한다
+          if (data.chatRoomId !== selectedSpaceIdRef.current) break;
 
+          pendingEnterRoomSpaceIdRef.current = null;
+          enteredSpaceIdRef.current = data.chatRoomId;
+          setEnteredSpaceId(data.chatRoomId);
+          setEnterRoomFailed(false);
+          // ENTER_ROOM이 서버에서 active 등록까지 수행하므로, ACK로 확인된 이후에만 active로 간주한다
+          notifyEnteredRef.current(data.chatRoomId);
           break;
 
         case "ERROR":
@@ -143,6 +157,15 @@ export default function ChatPage() {
             errorCode: data.errorCode,
             chatRoomId: data.chatRoomId,
           });
+
+          if (data.requestType === "ENTER_ROOM" && data.chatRoomId === selectedSpaceIdRef.current) {
+            pendingEnterRoomSpaceIdRef.current = null;
+            enteredSpaceIdRef.current = null;
+            setEnteredSpaceId(null);
+            // 재시도 UI 노출 — 사용자가 명시적으로 재시도하기 전까지 유지된다 (자동 재시도 없음)
+            setEnterRoomFailed(true);
+          }
+
           setWsError(data.message);
           break;
 
@@ -150,12 +173,17 @@ export default function ChatPage() {
           break;
       }
     },
-    [applySpaceUpdate, appendDiscussionEvent, setWsError]
+    [applySpaceUpdate, appendDiscussionEvent, setWsError, setEnteredSpaceId, setEnterRoomFailed]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
 
   const { notifyEntered } = useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive });
+
+  // handleMessage(ENTER_ROOM_ACK)가 최신 notifyEntered를 참조하도록 매 렌더마다 동기화한다
+  useEffect(() => {
+    notifyEnteredRef.current = notifyEntered;
+  });
 
   // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
@@ -217,33 +245,58 @@ export default function ChatPage() {
     prevConnectedRef.current = connected;
   }, [connected, refreshSpaces, clearPendingTimeouts]);
 
+  // ENTER_ROOM 전송 + 대기 상태 기록의 단일 진입점. 최초 전송(effect)과 사용자의 명시적 재시도(retryEnterRoom)가 공유한다.
+  // 같은 spaceId로 이미 보내고 ACK/ERROR를 기다리는 중이면(ref는 동기로 즉시 반영되므로 더블클릭/중복 호출에도 안전) 재전송하지 않는다.
+  const triggerEnterRoom = useCallback(
+    (spaceId) => {
+      if (pendingEnterRoomSpaceIdRef.current === spaceId) return;
+
+      pendingEnterRoomSpaceIdRef.current = spaceId;
+      sendEnterRoom(spaceId);
+    },
+    [sendEnterRoom]
+  );
+
+  // ENTER_ROOM 전송: 응답(ACK/ERROR)을 기다리지 않고 전송만 수행한다.
+  // enteredSpaceId/enteredSpaceIdRef는 ENTER_ROOM_ACK 수신 시에만 설정된다 (handleMessage 참고).
   useEffect(() => {
     if (!connected) return;
 
     if (selectedSpaceId === null) {
+      pendingEnterRoomSpaceIdRef.current = null;
       enteredSpaceIdRef.current = null;
       setEnteredSpaceId(null);
+      setEnterRoomFailed(false);
       return;
     }
 
     if (enteredSpaceIdRef.current === selectedSpaceId) return;
 
-    sendEnterRoom(selectedSpaceId);
-    notifyEntered(selectedSpaceId);
-
-    enteredSpaceIdRef.current = selectedSpaceId;
-    setEnteredSpaceId(selectedSpaceId);
-  }, [connected, selectedSpaceId, sendEnterRoom, notifyEntered]);
+    // 중복 전송 방지는 triggerEnterRoom 내부 가드가 단일하게 담당한다
+    setEnterRoomFailed(false);
+    triggerEnterRoom(selectedSpaceId);
+  }, [connected, selectedSpaceId, triggerEnterRoom]);
 
   useEffect(() => {
     if (!connected) {
+      pendingEnterRoomSpaceIdRef.current = null;
       enteredSpaceIdRef.current = null;
       setEnteredSpaceId(null);
+      setEnterRoomFailed(false);
     }
   }, [connected]);
 
+  // ENTER_ROOM 실패 후 사용자가 명시적으로 재시도할 때만 호출된다. 자동 재시도/타이머/백오프는 없다.
+  const retryEnterRoom = useCallback(() => {
+    if (!selectedSpaceId || !connected) return;
+    // 같은 메시지로 다시 실패해도 4초 배너가 온전히 재노출되도록 먼저 비운다 (useWsErrorBanner는 값이 바뀔 때만 타이머를 재시작함)
+    setWsError(null);
+    setEnterRoomFailed(false);
+    triggerEnterRoom(selectedSpaceId);
+  }, [selectedSpaceId, connected, setWsError, triggerEnterRoom]);
+
   // Space 메시지 전송 가능 여부를 나타내는 connection state
-  // offline: 네트워크 끊김 / reconnecting: 소켓 재연결 중 / synchronizing: ENTER_ROOM 동기화 중 / ready: 전송 가능
+  // offline: 네트워크 끊김 / reconnecting: 소켓 재연결 중 / synchronizing: ENTER_ROOM_ACK 대기 중 / ready: ACK 수신 완료(전송 가능)
   const connectionState = useMemo(() => {
     if (!online) return "offline";
     if (!connected) return "reconnecting";
@@ -519,6 +572,8 @@ export default function ChatPage() {
               onLeave={handleLeaveRoom}
               onRename={handleRenameRoom}
               connectionState={connectionState}
+              enterRoomFailed={enterRoomFailed}
+              onRetryEnterRoom={retryEnterRoom}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}
