@@ -24,13 +24,20 @@ export function useSpaces(selectedSpaceId) {
       .finally(() => setSpacesLoaded(true));
   }, []);
 
+  // 새로 고침된(정렬된) spaces 배열을 resolve하는 Promise를 반환한다.
+  // 실패 시에도 reject하지 않고 null을 resolve한다 — 기존 fire-and-forget 호출부가 unhandled rejection 없이 그대로 동작하도록 하기 위함.
   const refreshSpaces = useCallback(() => {
-    getSpaces()
+    return getSpaces()
       .then((result) => {
-        setSpaces(sortSpaces(result.data ?? []));
+        const sorted = sortSpaces(result.data ?? []);
+        setSpaces(sorted);
         setSpacesError(false);
+        return sorted;
       })
-      .catch(() => setSpacesError(true));
+      .catch(() => {
+        setSpacesError(true);
+        return null;
+      });
   }, []);
 
   // UPDATE_CHAT_ROOM WebSocket 이벤트 처리.

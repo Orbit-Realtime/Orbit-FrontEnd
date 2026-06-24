@@ -20,6 +20,8 @@ import ChatSidebar from "../components/chat/ChatSidebar";
 
 // echo가 이 시간 내에 도착하지 않으면 pending message를 "failed"로 표시한다
 const MESSAGE_SEND_TIMEOUT_MS = 10000;
+// ENTER_ROOM 전송 후 이 시간 내에 ACK/ERROR가 없으면 "입장 확인 실패"로 처리한다 (서버 실패 확정은 아님)
+const ENTER_ROOM_ACK_TIMEOUT_MS = 5000;
 
 export default function ChatPage() {
   const { auth } = useAuth();
@@ -32,8 +34,12 @@ export default function ChatPage() {
   // 데이터 상태 — realtime 연동 (위치 유지)
   const [selectedSpaceId, setSelectedSpaceId] = useState(null);
   const [online, setOnline] = useState(navigator.onLine);
-  // 현재 socket session 기준으로 ENTER_ROOM synchronization이 완료된 selectedSpaceId (enteredSpaceIdRef의 상태 버전)
+  // 서버가 ENTER_ROOM_ACK로 입장을 확인한 selectedSpaceId (enteredSpaceIdRef의 상태 버전). ENTER_ROOM 전송만으로는 설정되지 않는다.
   const [enteredSpaceId, setEnteredSpaceId] = useState(null);
+  // 현재 selectedSpaceId에 대한 ENTER_ROOM이 ERROR로 실패해 재시도 UI를 보여줘야 하는지. wsError(4초 후 자동 소멸)와 독립적으로 유지된다.
+  const [enterRoomFailed, setEnterRoomFailed] = useState(false);
+  // enterRoomFailed=true인 실패 중에서 "다시 보내면 성공할 가능성이 있는지". INVALID_REQUEST(FE 요청/프로토콜 오류)처럼 같은 요청을 반복해도 성공할 수 없는 경우에만 false가 된다.
+  const [enterRoomRetryable, setEnterRoomRetryable] = useState(true);
 
   const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
@@ -59,8 +65,14 @@ export default function ChatPage() {
   const selectedSpaceIdRef = useRef(null);
   const prevConnectedRef = useRef(false);
   const isInitialConnectRef = useRef(true);
-  // 현재 socket session 기준으로 ENTER_ROOM synchronization이 완료된 selectedSpaceId
+  // ENTER_ROOM_ACK를 수신해 서버가 입장을 확인한 selectedSpaceId
   const enteredSpaceIdRef = useRef(null);
+  // ENTER_ROOM을 보냈지만 아직 ACK/ERROR 응답을 받지 못한 spaceId (중복 전송 방지 + ACK/ERROR 매칭용)
+  const pendingEnterRoomSpaceIdRef = useRef(null);
+  // ENTER_ROOM ACK timeout의 setTimeout ID. 활성 timeout이 없으면 null.
+  const enterRoomAckTimeoutRef = useRef(null);
+  // handleMessage(useCallback)가 useSpaceActivity보다 먼저 선언되어 notifyEntered를 직접 참조할 수 없으므로 ref로 우회한다
+  const notifyEnteredRef = useRef(() => {});
   const historyFetchIdRef = useRef(0);
   const memberLastReadRef = useRef({});
   const countedDiscussionMessageIdsRef = useRef(new Set());
@@ -73,6 +85,14 @@ export default function ChatPage() {
       clearTimeout(timeoutId);
     }
     pendingTimeoutsRef.current.clear();
+  }, []);
+
+  // 활성 ENTER_ROOM ACK timeout이 있으면 해제한다 (ACK/ERROR 수신, selectedSpaceId null, 연결 끊김, 재전송 시작, unmount 시 공통으로 사용)
+  const clearEnterRoomAckTimeout = useCallback(() => {
+    if (enterRoomAckTimeoutRef.current !== null) {
+      clearTimeout(enterRoomAckTimeoutRef.current);
+      enterRoomAckTimeoutRef.current = null;
+    }
   }, []);
 
   // WebSocket 수신 메시지 처리
@@ -133,20 +153,117 @@ export default function ChatPage() {
           }
           break;
 
-        case "ERROR":
-          setWsError(data.message);
+        case "ENTER_ROOM_ACK":
+          // 이미 다른 Space로 전환된 뒤 늦게 도착한 stale ACK는 무시한다
+          if (data.chatRoomId !== selectedSpaceIdRef.current) break;
+          // timeout으로 이미 pending이 해제된 뒤 늦게 도착한 ACK는 무시한다
+          if (pendingEnterRoomSpaceIdRef.current !== data.chatRoomId) break;
+
+          clearEnterRoomAckTimeout();
+          pendingEnterRoomSpaceIdRef.current = null;
+          enteredSpaceIdRef.current = data.chatRoomId;
+          setEnteredSpaceId(data.chatRoomId);
+          setEnterRoomFailed(false);
+          setEnterRoomRetryable(true);
+          // ENTER_ROOM이 서버에서 active 등록까지 수행하므로, ACK로 확인된 이후에만 active로 간주한다
+          notifyEnteredRef.current(data.chatRoomId);
           break;
+
+        case "ERROR": {
+          console.warn("WS ERROR", {
+            requestType: data.requestType,
+            errorCode: data.errorCode,
+            chatRoomId: data.chatRoomId,
+          });
+
+          // timeout으로 이미 pending이 해제된 뒤 늦게 도착한 ERROR는 무시한다 (선행 조건 강화, errorCode별 처리 내용은 변경 없음)
+          const isEnterRoomError =
+            data.requestType === "ENTER_ROOM" &&
+            data.chatRoomId === selectedSpaceIdRef.current &&
+            pendingEnterRoomSpaceIdRef.current === data.chatRoomId;
+
+          if (isEnterRoomError) {
+            clearEnterRoomAckTimeout();
+            pendingEnterRoomSpaceIdRef.current = null;
+            enteredSpaceIdRef.current = null;
+            setEnteredSpaceId(null);
+            // 재시도 UI 노출 — 사용자가 명시적으로 재시도하기 전까지 유지된다 (자동 재시도 없음)
+            setEnterRoomFailed(true);
+            // INVALID_REQUEST(FE 요청/프로토콜 오류), UNAUTHORIZED(로그인 만료)는 같은 요청을 다시 보내도
+            // 성공할 가능성이 낮으므로 재시도 버튼을 숨긴다
+            setEnterRoomRetryable(
+              data.errorCode !== "INVALID_REQUEST" &&
+              data.errorCode !== "UNAUTHORIZED"
+            );
+          }
+
+          // INTERNAL_ERROR는 권한/목록 문제가 아니라 서버 내부 처리 실패다 — BE 원문은 "재시도해도 되는지"가 불명확해 FE에서만 문구를 보완한다
+          if (isEnterRoomError && data.errorCode === "INTERNAL_ERROR") {
+            setWsError("일시적인 오류로 채팅방 입장에 실패했습니다. 다시 시도해주세요.");
+          } else if (isEnterRoomError && data.errorCode === "INVALID_REQUEST") {
+            setWsError("방에 입장할 수 없습니다. 새로고침 후 다시 시도해주세요.");
+          } else if (isEnterRoomError && data.errorCode === "UNAUTHORIZED") {
+            // 지금은 안내만 한다 — 자동 로그아웃/페이지 이동은 별도 작업에서 다룬다
+            setWsError("로그인이 만료되었습니다. 다시 로그인해주세요.");
+          } else {
+            setWsError(data.message);
+          }
+
+          // 서버는 비참여자도 ROOM_NOT_FOUND로 내려줄 수 있으므로, FE에서는 ROOM_NOT_FOUND/FORBIDDEN을 접근 불가 계열로 취급해
+          // Space 목록을 다시 조회하고 실제로 사라졌는지 확인한다 (그 외 errorCode는 공통 처리만 적용)
+          if (isEnterRoomError && (data.errorCode === "ROOM_NOT_FOUND" || data.errorCode === "FORBIDDEN")) {
+            const erroredSpaceId = data.chatRoomId;
+
+            refreshSpaces().then((refreshedSpaces) => {
+              // refresh가 끝나기 전에 다른 Space로 이동했으면 이 결과는 더 이상 유효하지 않다
+              if (selectedSpaceIdRef.current !== erroredSpaceId) return;
+              // refresh 자체가 실패하면 접근 가능 여부를 판단할 수 없으므로 기존 재시도 UI를 그대로 둔다
+              if (refreshedSpaces === null) return;
+
+              const stillAccessible = refreshedSpaces.some((s) => s.chatRoomId === erroredSpaceId);
+              if (stillAccessible) return; // 여전히 접근 가능 — enterRoomFailed=true 유지, 재시도 버튼 노출 그대로
+
+              // 목록에서 사라짐 — 더 이상 접근할 수 없는 Space
+              setSelectedSpaceId(null);
+              setMessages([]);
+              setPendingMessages([]);
+              clearPendingTimeouts();
+              setPanelState(null);
+              clearDiscussionEvents();
+              setEnterRoomFailed(false);
+              setWsError("더 이상 접근할 수 없는 공간입니다.");
+            });
+          }
+
+          break;
+        }
 
         default:
           break;
       }
     },
-    [applySpaceUpdate, appendDiscussionEvent, setWsError]
+    [
+      applySpaceUpdate,
+      appendDiscussionEvent,
+      setWsError,
+      setEnteredSpaceId,
+      setEnterRoomFailed,
+      setEnterRoomRetryable,
+      clearEnterRoomAckTimeout,
+      refreshSpaces,
+      clearPendingTimeouts,
+      clearDiscussionEvents,
+    ]
   );
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendDiscussionMessage } = useWebSocket(handleMessage);
 
   const { notifyEntered } = useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive });
+
+  // handleMessage(ENTER_ROOM_ACK)가 최신 notifyEntered를 참조하도록 매 렌더마다 동기화한다
+  useEffect(() => {
+    notifyEnteredRef.current = notifyEntered;
+  });
 
   // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
@@ -208,33 +325,84 @@ export default function ChatPage() {
     prevConnectedRef.current = connected;
   }, [connected, refreshSpaces, clearPendingTimeouts]);
 
+  // ENTER_ROOM 전송 + 대기 상태 기록의 단일 진입점. 최초 전송(effect)과 사용자의 명시적 재시도(retryEnterRoom)가 공유한다.
+  // 같은 spaceId로 이미 보내고 ACK/ERROR를 기다리는 중이면(ref는 동기로 즉시 반영되므로 더블클릭/중복 호출에도 안전) 재전송하지 않는다.
+  // ACK timeout 등록도 이 함수가 단일하게 담당한다 — 재전송 시작 시 이전 timeout을 먼저 정리하고 새로 등록한다.
+  const triggerEnterRoom = useCallback(
+    (spaceId) => {
+      if (pendingEnterRoomSpaceIdRef.current === spaceId) return;
+
+      clearEnterRoomAckTimeout();
+      pendingEnterRoomSpaceIdRef.current = spaceId;
+      sendEnterRoom(spaceId);
+
+      enterRoomAckTimeoutRef.current = setTimeout(() => {
+        // ACK/ERROR로 이미 해제된 pending이면(또는 다른 spaceId로 덮어써졌으면) 아무것도 하지 않는다
+        if (pendingEnterRoomSpaceIdRef.current !== spaceId) return;
+
+        enterRoomAckTimeoutRef.current = null;
+        pendingEnterRoomSpaceIdRef.current = null;
+        // enteredSpaceIdRef/enteredSpaceId는 ACK를 받은 적이 없으므로 null 유지
+        enteredSpaceIdRef.current = null;
+        setEnteredSpaceId(null);
+        setEnterRoomFailed(true);
+        // 서버 실패 확정이 아니라 "입장 확인 실패"이므로 재시도 가능으로 분류한다 (자동 재시도는 하지 않음)
+        setEnterRoomRetryable(true);
+        setWsError("채팅방 입장을 확인하지 못했습니다. 다시 시도해주세요.");
+      }, ENTER_ROOM_ACK_TIMEOUT_MS);
+    },
+    [sendEnterRoom, clearEnterRoomAckTimeout]
+  );
+
+  // ENTER_ROOM 전송: 응답(ACK/ERROR)을 기다리지 않고 전송만 수행한다.
+  // enteredSpaceId/enteredSpaceIdRef는 ENTER_ROOM_ACK 수신 시에만 설정된다 (handleMessage 참고).
   useEffect(() => {
     if (!connected) return;
 
     if (selectedSpaceId === null) {
+      clearEnterRoomAckTimeout();
+      pendingEnterRoomSpaceIdRef.current = null;
       enteredSpaceIdRef.current = null;
       setEnteredSpaceId(null);
+      setEnterRoomFailed(false);
+      setEnterRoomRetryable(true);
       return;
     }
 
     if (enteredSpaceIdRef.current === selectedSpaceId) return;
 
-    sendEnterRoom(selectedSpaceId);
-    notifyEntered(selectedSpaceId);
-
-    enteredSpaceIdRef.current = selectedSpaceId;
-    setEnteredSpaceId(selectedSpaceId);
-  }, [connected, selectedSpaceId, sendEnterRoom, notifyEntered]);
+    // 중복 전송 방지는 triggerEnterRoom 내부 가드가 단일하게 담당한다
+    setEnterRoomFailed(false);
+    setEnterRoomRetryable(true);
+    triggerEnterRoom(selectedSpaceId);
+  }, [connected, selectedSpaceId, triggerEnterRoom, clearEnterRoomAckTimeout]);
 
   useEffect(() => {
     if (!connected) {
+      clearEnterRoomAckTimeout();
+      pendingEnterRoomSpaceIdRef.current = null;
       enteredSpaceIdRef.current = null;
       setEnteredSpaceId(null);
+      setEnterRoomFailed(false);
+      setEnterRoomRetryable(true);
     }
-  }, [connected]);
+  }, [connected, clearEnterRoomAckTimeout]);
+
+  // unmount 시 활성 ENTER_ROOM ACK timeout을 정리한다
+  useEffect(() => () => clearEnterRoomAckTimeout(), [clearEnterRoomAckTimeout]);
+
+  // ENTER_ROOM 실패 후 사용자가 명시적으로 재시도할 때만 호출된다. 자동 재시도/타이머/백오프는 없다.
+  const retryEnterRoom = useCallback(() => {
+    if (!selectedSpaceId || !connected) return;
+    // 같은 메시지로 다시 실패해도 4초 배너가 온전히 재노출되도록 먼저 비운다 (useWsErrorBanner는 값이 바뀔 때만 타이머를 재시작함)
+    setWsError(null);
+    setEnterRoomFailed(false);
+    setEnterRoomRetryable(true);
+    triggerEnterRoom(selectedSpaceId);
+  }, [selectedSpaceId, connected, setWsError, triggerEnterRoom]);
 
   // Space 메시지 전송 가능 여부를 나타내는 connection state
-  // offline: 네트워크 끊김 / reconnecting: 소켓 재연결 중 / synchronizing: ENTER_ROOM 동기화 중 / ready: 전송 가능
+  // offline: 네트워크 끊김 / reconnecting: 소켓 재연결 중 / synchronizing: ENTER_ROOM_ACK 대기 중 / ready: ACK 수신 완료(전송 가능)
   const connectionState = useMemo(() => {
     if (!online) return "offline";
     if (!connected) return "reconnecting";
@@ -510,6 +678,9 @@ export default function ChatPage() {
               onLeave={handleLeaveRoom}
               onRename={handleRenameRoom}
               connectionState={connectionState}
+              enterRoomFailed={enterRoomFailed}
+              enterRoomRetryable={enterRoomRetryable}
+              onRetryEnterRoom={retryEnterRoom}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}

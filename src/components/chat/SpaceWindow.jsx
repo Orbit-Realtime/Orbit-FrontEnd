@@ -5,7 +5,7 @@ import MessageItem from "./MessageItem";
 import { formatDateDivider } from "../../utils/formatTime";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 
-export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId, onRemoveFailedMessage, onRetryMessage }) {
+export default function SpaceWindow({ space, messages, lastReadMessageId, onSend, loading, historyError, onBack, onLeave, onRename, connectionState, enterRoomFailed, enterRoomRetryable, onRetryEnterRoom, hasMore, isLoadingMore, onLoadMore, onRetryHistory, membersOpen, onToggleMembers, onOpenDiscussion, activeDiscussionChatId, onRemoveFailedMessage, onRetryMessage }) {
   const { auth } = useAuth();
   const textareaRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -143,6 +143,10 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
     idx > 0 && messages[idx - 1].senderId === msg.senderId;
 
   const canRetry = connectionState === "ready";
+  // ENTER_ROOM이 ERROR로 실패해 synchronizing에 머무는 동안에만, 그리고 재시도해도 성공 가능성이 있는 실패(enterRoomRetryable)일 때만 버튼을 보여준다
+  const showEnterRoomRetry = connectionState === "synchronizing" && enterRoomFailed && enterRoomRetryable;
+  // INVALID_REQUEST처럼 재시도가 의미 없는 실패는 버튼 없이 새로고침 안내만 표시한다
+  const showEnterRoomBlocked = connectionState === "synchronizing" && enterRoomFailed && !enterRoomRetryable;
 
   return (
     <div className="relative flex h-full overflow-hidden">
@@ -372,7 +376,23 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                 </>
               )}
               {connectionState === "reconnecting" && <p>서버와 다시 연결하는 중입니다...</p>}
-              {connectionState === "synchronizing" && <p>채팅방 연결 준비 중입니다...</p>}
+              {connectionState === "synchronizing" && (
+                showEnterRoomRetry ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <p>채팅방 입장에 실패했습니다.</p>
+                    <button
+                      onClick={onRetryEnterRoom}
+                      className="text-orbit-cyan hover:text-orbit-text underline transition-colors"
+                    >
+                      다시 시도
+                    </button>
+                  </div>
+                ) : showEnterRoomBlocked ? (
+                  <p>채팅방에 입장할 수 없습니다. 새로고침 후 다시 시도해주세요.</p>
+                ) : (
+                  <p>채팅방 연결 준비 중입니다...</p>
+                )
+              )}
             </div>
           )}
           <div className={`flex items-center gap-2 bg-orbit-surface2 rounded-xl border px-4 py-2.5 transition-colors ${
