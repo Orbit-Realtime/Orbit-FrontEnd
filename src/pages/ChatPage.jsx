@@ -22,6 +22,13 @@ import ChatSidebar from "../components/chat/ChatSidebar";
 const MESSAGE_SEND_TIMEOUT_MS = 10000;
 // ENTER_ROOM 전송 후 이 시간 내에 ACK/ERROR가 없으면 "입장 확인 실패"로 처리한다 (서버 실패 확정은 아님)
 const ENTER_ROOM_ACK_TIMEOUT_MS = 5000;
+// CHAT_MESSAGE ERROR의 errorCode 중 같은 내용으로 재시도해도 동일하게 실패하는 errorCode.
+// 여기 없는 errorCode(ROOM_NOT_JOINED, INTERNAL_ERROR, 미분류 포함)는 재시도 가능으로 간주한다(fail-open).
+const CHAT_MESSAGE_NON_RETRYABLE_ERROR_CODES = new Set([
+  "ROOM_NOT_FOUND",
+  "UNAUTHORIZED",
+  "INVALID_MESSAGE",
+]);
 
 export default function ChatPage() {
   const { auth } = useAuth();
@@ -188,7 +195,18 @@ export default function ChatPage() {
               clearTimeout(timeoutId);
               pendingTimeoutsRef.current.delete(data.clientMessageId);
             }
-            setPendingMessages((prev) => markPendingMessageFailed(prev, data.clientMessageId));
+            // errorCode/retryable은 markPendingMessageFailed가 다루는 status와 별개의 부가 필드로 얹는다
+            setPendingMessages((prev) =>
+              markPendingMessageFailed(prev, data.clientMessageId).map((p) =>
+                p.clientMessageId === data.clientMessageId
+                  ? {
+                      ...p,
+                      errorCode: data.errorCode,
+                      retryable: !CHAT_MESSAGE_NON_RETRYABLE_ERROR_CODES.has(data.errorCode),
+                    }
+                  : p
+              )
+            );
           }
 
           if (isEnterRoomError) {
