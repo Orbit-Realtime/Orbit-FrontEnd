@@ -182,6 +182,15 @@ export default function ChatPage() {
             data.chatRoomId === selectedSpaceIdRef.current &&
             pendingEnterRoomSpaceIdRef.current === data.chatRoomId;
 
+          if (data.requestType === "CHAT_MESSAGE" && data.clientMessageId) {
+            const timeoutId = pendingTimeoutsRef.current.get(data.clientMessageId);
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              pendingTimeoutsRef.current.delete(data.clientMessageId);
+            }
+            setPendingMessages((prev) => markPendingMessageFailed(prev, data.clientMessageId));
+          }
+
           if (isEnterRoomError) {
             clearEnterRoomAckTimeout();
             pendingEnterRoomSpaceIdRef.current = null;
