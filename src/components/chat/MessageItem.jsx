@@ -21,13 +21,9 @@ function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage, onR
               {unreadMemberCount}
             </span>
           )}
-          {isSending ? (
-            <MessagePendingIndicator />
-          ) : (
-            <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
-              {isFailed ? "전송 실패" : timeStr}
-            </span>
-          )}
+          <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
+            {isSending ? <MessagePendingIndicator /> : isFailed ? "전송 실패" : timeStr}
+          </span>
           {isFailed && onRetryMessage && (
             <button
               onClick={() => onRetryMessage(message.clientMessageId)}
