@@ -278,7 +278,7 @@ export default function SpaceWindow({ space, messages, lastReadMessageId, onSend
                 {messages.map((msg, idx) => {
                   const isActiveDiscussion = msg.chatId === activeDiscussionChatId;
                   return (
-                <div key={msg.chatId ?? msg.clientMessageId}>
+                <div key={msg.clientMessageId ?? msg.chatId}>
                   {showDateDividerBefore(msg, idx) && (
                     <div className="flex items-center gap-2 my-3">
                       <div className="flex-1 h-px bg-orbit-border" />
