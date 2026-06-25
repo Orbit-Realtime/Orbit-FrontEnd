@@ -41,7 +41,7 @@ export function removePendingByClientMessageId(pendingMessages, clientMessageId)
  * - 일치하는 항목이 없으면 pendingMessages를 그대로 반환한다.
  *
  * @param {Array<{clientMessageId: string, status: string}>} pendingMessages
- * @param {string} clientMessageId - timeout이 만료된 pending message의 clientMessageId
+ * @param {string} clientMessageId - ERROR(requestType=CHAT_MESSAGE)를 수신한 pending message의 clientMessageId
  * @returns {Array<{clientMessageId: string, status: string}>}
  */
 export function markPendingMessageFailed(pendingMessages, clientMessageId) {

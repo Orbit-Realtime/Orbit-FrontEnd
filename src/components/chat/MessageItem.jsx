@@ -1,13 +1,16 @@
 import { memo } from "react";
 import { formatMessageTime } from "../../utils/formatTime";
 import MessageContentRenderer from "./MessageContentRenderer";
+import MessagePendingIndicator from "./MessagePendingIndicator";
 
 function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage, onRetryMessage, canRetry }) {
-  const { senderNickname, message: text, unreadMemberCount, createdDate, status } = message;
+  const { senderNickname, message: text, unreadMemberCount, createdDate, status, retryable } = message;
 
   const timeStr = formatMessageTime(createdDate);
   const isSending = status === "sending";
   const isFailed = status === "failed";
+  // retryable이 명시적으로 false인 경우만 재시도를 막는다 (timeout으로 인한 failed는 retryable 필드가 없어 재시도 가능 유지)
+  const canRetryThisMessage = canRetry && retryable !== false;
 
   if (isMine) {
     return (
@@ -18,14 +21,24 @@ function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage, onR
               {unreadMemberCount}
             </span>
           )}
-          <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
-            {isSending ? "전송 중..." : isFailed ? "전송 실패" : timeStr}
-          </span>
+          {isSending ? (
+            <MessagePendingIndicator />
+          ) : (
+            <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
+              {isFailed ? "전송 실패" : timeStr}
+            </span>
+          )}
           {isFailed && onRetryMessage && (
             <button
               onClick={() => onRetryMessage(message.clientMessageId)}
-              disabled={!canRetry}
-              title={!canRetry ? "연결이 준비되면 재시도할 수 있습니다." : undefined}
+              disabled={!canRetryThisMessage}
+              title={
+                retryable === false
+                  ? "재시도할 수 없는 오류입니다."
+                  : !canRetry
+                  ? "연결이 준비되면 재시도할 수 있습니다."
+                  : undefined
+              }
               className="text-orbit-cyan/70 hover:text-orbit-cyan text-xs leading-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-orbit-cyan/70"
               aria-label="재시도"
             >
