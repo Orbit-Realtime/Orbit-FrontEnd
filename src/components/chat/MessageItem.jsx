@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { formatMessageTime } from "../../utils/formatTime";
 import MessageContentRenderer from "./MessageContentRenderer";
+import MessagePendingIndicator from "./MessagePendingIndicator";
 
 function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage, onRetryMessage, canRetry }) {
   const { senderNickname, message: text, unreadMemberCount, createdDate, status, retryable } = message;
@@ -20,9 +21,13 @@ function MessageItem({ message, isMine, hideNickname, onRemoveFailedMessage, onR
               {unreadMemberCount}
             </span>
           )}
-          <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
-            {isSending ? "전송 중..." : isFailed ? "전송 실패" : timeStr}
-          </span>
+          {isSending ? (
+            <MessagePendingIndicator />
+          ) : (
+            <span className={`text-xs leading-none ${isFailed ? "text-red-400" : "text-orbit-muted"}`}>
+              {isFailed ? "전송 실패" : timeStr}
+            </span>
+          )}
           {isFailed && onRetryMessage && (
             <button
               onClick={() => onRetryMessage(message.clientMessageId)}

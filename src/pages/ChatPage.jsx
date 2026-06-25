@@ -18,8 +18,6 @@ import ReconnectBanner from "../components/chat/ReconnectBanner";
 import WsErrorBanner from "../components/chat/WsErrorBanner";
 import ChatSidebar from "../components/chat/ChatSidebar";
 
-// echo가 이 시간 내에 도착하지 않으면 pending message를 "failed"로 표시한다
-const MESSAGE_SEND_TIMEOUT_MS = 10000;
 // CHAT_MESSAGE ERROR의 errorCode 중 같은 메시지를 재시도해도 동일하게 실패하는 errorCode.
 // ROOM_NOT_JOINED: handleRetryMessage는 sendChatMessage만 재호출하고 ENTER_ROOM을 다시 보내지 않으므로,
 // session이 room에 등록되지 않은 상태는 메시지 재시도만으로 복구되지 않는다. (ENTER_ROOM -> ACK -> ready 복구 후 재전송이 필요)
@@ -83,16 +81,6 @@ export default function ChatPage() {
   const historyFetchIdRef = useRef(0);
   const memberLastReadRef = useRef({});
   const countedDiscussionMessageIdsRef = useRef(new Set());
-  // pending message의 send timeout 관리 (clientMessageId -> timeoutId)
-  const pendingTimeoutsRef = useRef(new Map());
-
-  // 등록된 모든 pending message timeout을 정리한다
-  const clearPendingTimeouts = useCallback(() => {
-    for (const timeoutId of pendingTimeoutsRef.current.values()) {
-      clearTimeout(timeoutId);
-    }
-    pendingTimeoutsRef.current.clear();
-  }, []);
 
   // WebSocket 수신 메시지 처리
   const handleMessage = useCallback(
@@ -100,11 +88,6 @@ export default function ChatPage() {
       switch (data.messageType) {
         case "CHAT_MESSAGE":
           if (data.chatRoomId === selectedSpaceIdRef.current) {
-            const timeoutId = pendingTimeoutsRef.current.get(data.clientMessageId);
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-              pendingTimeoutsRef.current.delete(data.clientMessageId);
-            }
             setPendingMessages((prev) => removePendingByClientMessageId(prev, data.clientMessageId));
             setMessages((prev) => mergeMessagesById(prev, [data]));
           }
@@ -181,11 +164,6 @@ export default function ChatPage() {
             data.chatRoomId === selectedSpaceIdRef.current;
 
           if (data.requestType === "CHAT_MESSAGE" && data.clientMessageId) {
-            const timeoutId = pendingTimeoutsRef.current.get(data.clientMessageId);
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-              pendingTimeoutsRef.current.delete(data.clientMessageId);
-            }
             // errorCode/retryable은 markPendingMessageFailed가 다루는 status와 별개의 부가 필드로 얹는다
             setPendingMessages((prev) =>
               markPendingMessageFailed(prev, data.clientMessageId).map((p) =>
@@ -247,7 +225,6 @@ export default function ChatPage() {
               setSelectedSpaceId(null);
               setMessages([]);
               setPendingMessages([]);
-              clearPendingTimeouts();
               setPanelState(null);
               clearDiscussionEvents();
               setEnterRoomFailed(false);
@@ -270,7 +247,6 @@ export default function ChatPage() {
       setEnterRoomFailed,
       setEnterRoomRetryable,
       refreshSpaces,
-      clearPendingTimeouts,
       clearDiscussionEvents,
     ]
   );
@@ -286,9 +262,6 @@ export default function ChatPage() {
 
   // selectedSpaceIdRef를 최신 selectedSpaceId로 동기화 (reconnect effect에서 사용)
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
-
-  // unmount 시 등록된 pending message timeout을 모두 정리
-  useEffect(() => () => clearPendingTimeouts(), [clearPendingTimeouts]);
 
   // 브라우저 online/offline 상태 추적 (connectionState 계산용)
   useEffect(() => {
@@ -313,7 +286,6 @@ export default function ChatPage() {
           memberLastReadRef.current = {};
           setMessages([]);
           setPendingMessages([]);
-          clearPendingTimeouts();
           setIsLoadingMore(false);
           setHistoryLoading(true);
           setHistoryError(false);
@@ -342,7 +314,7 @@ export default function ChatPage() {
       isInitialConnectRef.current = false;
     }
     prevConnectedRef.current = connected;
-  }, [connected, refreshSpaces, clearPendingTimeouts]);
+  }, [connected, refreshSpaces]);
 
   // ENTER_ROOM 전송 + 대기 상태 기록의 단일 진입점. 최초 전송(effect)과 사용자의 명시적 재시도(retryEnterRoom)가 공유한다.
   // 같은 spaceId로 이미 보내고 ACK/ERROR를 기다리는 중이면(ref는 동기로 즉시 반영되므로 더블클릭/중복 호출에도 안전) 재전송하지 않는다.
@@ -425,7 +397,6 @@ export default function ChatPage() {
       setSelectedSpaceId(spaceId);
       setMessages([]);
       setPendingMessages([]);
-      clearPendingTimeouts();
       setLastReadMessageId(null);
       setHasMore(false);
       setOldestChatId(null);
@@ -453,7 +424,7 @@ export default function ChatPage() {
           setHistoryLoading(false);
         });
     },
-    [selectedSpaceId, clearPendingTimeouts]
+    [selectedSpaceId]
   );
 
   usePendingInvite({ connected, spacesLoaded, spaces, onSelectSpace: handleSelectSpace });
@@ -505,20 +476,6 @@ export default function ChatPage() {
       });
   }, [selectedSpaceId]);
 
-  // echo 미수신 시 pending message를 "failed"로 전환하는 send timeout을 등록한다 (handleSend/handleRetryMessage 공용)
-  const registerPendingTimeout = useCallback((clientMessageId) => {
-    const existingTimeoutId = pendingTimeoutsRef.current.get(clientMessageId);
-    if (existingTimeoutId) {
-      clearTimeout(existingTimeoutId);
-    }
-
-    const timeoutId = setTimeout(() => {
-      pendingTimeoutsRef.current.delete(clientMessageId);
-      setPendingMessages((prev) => markPendingMessageFailed(prev, clientMessageId));
-    }, MESSAGE_SEND_TIMEOUT_MS);
-    pendingTimeoutsRef.current.set(clientMessageId, timeoutId);
-  }, []);
-
   // 메시지 전송
   const handleSend = useCallback(
     (message) => {
@@ -538,11 +495,9 @@ export default function ChatPage() {
         },
       ]);
 
-      registerPendingTimeout(clientMessageId);
-
       sendChatMessage(selectedSpaceId, message, clientMessageId);
     },
-    [selectedSpaceId, sendChatMessage, auth, registerPendingTimeout]
+    [selectedSpaceId, sendChatMessage, auth]
   );
 
   // failed pending message를 재시도: 같은 clientMessageId로 sendChatMessage를 재호출하고 status를 "sending"으로 되돌린다
@@ -556,10 +511,9 @@ export default function ChatPage() {
       if (!target) return;
 
       setPendingMessages((prev) => markPendingMessageSending(prev, clientMessageId));
-      registerPendingTimeout(clientMessageId);
       sendChatMessage(target.chatRoomId, target.message, clientMessageId);
     },
-    [connectionState, pendingMessages, sendChatMessage, registerPendingTimeout]
+    [connectionState, pendingMessages, sendChatMessage]
   );
 
   // 서버 확정 메시지 + FE 전송 중 메시지를 합친 렌더링 목록
