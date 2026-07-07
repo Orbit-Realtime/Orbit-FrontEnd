@@ -61,19 +61,20 @@ export function useSpaces(selectedSpaceId) {
             ) {
               return space;
             }
+            const isActiveRoom = space.chatRoomId === selectedSpaceId;
             return {
               ...space,
               title: data.title ?? space.title,
               lastMessage: data.lastMessage,
               createdDate: data.createdDate,
               lastChatId: data.lastChatId,
-              unreadMessageCount: data.unreadMessageCount,
+              unreadMessageCount: isActiveRoom ? 0 : data.unreadMessageCount,
             };
           })
         );
       });
     },
-    [refreshSpaces]
+    [refreshSpaces, selectedSpaceId]
   );
 
   const removeSpace = useCallback((spaceId) => {
