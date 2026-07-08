@@ -452,6 +452,7 @@ export default function ChatPage() {
       pendingReadCursorRef.current = null;
       lastSentReadCursorRef.current = null;
       setSelectedSpaceId(spaceId);
+      patchSpace(spaceId, { unreadMessageCount: 0 });
       setMessages([]);
       setPendingMessages([]);
       setLastReadMessageId(null);
@@ -481,7 +482,7 @@ export default function ChatPage() {
           setHistoryLoading(false);
         });
     },
-    [selectedSpaceId]
+    [selectedSpaceId, patchSpace]
   );
 
   usePendingInvite({ connected, spacesLoaded, spaces, onSelectSpace: handleSelectSpace });
