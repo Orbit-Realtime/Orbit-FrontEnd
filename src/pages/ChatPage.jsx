@@ -133,6 +133,10 @@ export default function ChatPage() {
           patchSpace(data.chatRoomId, { title: data.title });
           break;
 
+        case "SPACE_INVITED":
+          refreshSpaces();
+          break;
+
         case "READ_EVENT": {
           if (data.chatRoomId !== selectedSpaceIdRef.current) break;
 
