@@ -51,7 +51,7 @@ export default function ChatPage() {
   // enterRoomFailed=true인 실패 중에서 "다시 보내면 성공할 가능성이 있는지". INVALID_REQUEST(FE 요청/프로토콜 오류)처럼 같은 요청을 반복해도 성공할 수 없는 경우에만 false가 된다.
   const [enterRoomRetryable, setEnterRoomRetryable] = useState(true);
 
-  const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applySpaceUpdate, removeSpace, patchSpace } =
+  const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
   const [messages, setMessages] = useState([]);
   // FE에서만 존재하는 전송 중 메시지 (echo reconciliation 이전 단계, clientMessageId로 식별)
@@ -129,8 +129,8 @@ export default function ChatPage() {
           }
           break;
 
-        case "UPDATE_CHAT_ROOM":
-          applySpaceUpdate(data);
+        case "SPACE_TITLE_CHANGED":
+          patchSpace(data.chatRoomId, { title: data.title });
           break;
 
         case "READ_EVENT": {
@@ -276,7 +276,7 @@ export default function ChatPage() {
       }
     },
     [
-      applySpaceUpdate,
+      patchSpace,
       appendDiscussionEvent,
       setWsError,
       setEnteredSpaceId,
@@ -603,8 +603,8 @@ export default function ChatPage() {
   const handleRenameRoom = useCallback(async (newTitle) => {
     if (!selectedSpaceId || !newTitle.trim()) return;
     try {
-      await renameSpace(selectedSpaceId, newTitle.trim());
-      patchSpace(selectedSpaceId, { title: newTitle.trim() });
+      const result = await renameSpace(selectedSpaceId, newTitle.trim());
+      patchSpace(result.data.chatRoomId, { title: result.data.title });
     } catch (e) {
       // ignore
     }

@@ -40,43 +40,6 @@ export function useSpaces(selectedSpaceId) {
       });
   }, []);
 
-  // UPDATE_CHAT_ROOM WebSocket 이벤트 처리.
-  // spaceExists === false: 새로 초대된 방은 인라인 추가 대신 전체 재조회로 처리.
-  // lastChatId 역전 시 stale 이벤트 무시.
-  const applySpaceUpdate = useCallback(
-    (data) => {
-      setSpaces((prev) => {
-        const spaceExists = prev.some((r) => r.chatRoomId === data.chatRoomId);
-        if (!spaceExists) {
-          setTimeout(refreshSpaces, 0);
-          return prev;
-        }
-        return sortSpaces(
-          prev.map((space) => {
-            if (space.chatRoomId !== data.chatRoomId) return space;
-            if (
-              data.lastChatId != null &&
-              space.lastChatId != null &&
-              data.lastChatId < space.lastChatId
-            ) {
-              return space;
-            }
-            const isActiveRoom = space.chatRoomId === selectedSpaceId;
-            return {
-              ...space,
-              title: data.title ?? space.title,
-              lastMessage: data.lastMessage,
-              createdDate: data.createdDate,
-              lastChatId: data.lastChatId,
-              unreadMessageCount: isActiveRoom ? 0 : data.unreadMessageCount,
-            };
-          })
-        );
-      });
-    },
-    [refreshSpaces, selectedSpaceId]
-  );
-
   const removeSpace = useCallback((spaceId) => {
     setSpaces((prev) => prev.filter((r) => r.chatRoomId !== spaceId));
   }, []);
@@ -98,7 +61,6 @@ export function useSpaces(selectedSpaceId) {
     spacesLoaded,
     selectedSpace,
     refreshSpaces,
-    applySpaceUpdate,
     removeSpace,
     patchSpace,
   };
