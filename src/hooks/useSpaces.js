@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { getSpaces } from "../api/spaceApi";
 
 const sortSpaces = (spaces) =>
@@ -24,57 +24,43 @@ export function useSpaces(selectedSpaceId) {
       .finally(() => setSpacesLoaded(true));
   }, []);
 
+  // 진행 중인 refresh의 Promise. 중복 호출 시 새 GET 대신 이 Promise를 그대로 반환한다(single-flight).
+  const refreshingRef = useRef(null);
+  // 진행 중인 refresh가 끝난 뒤 한 번 더 refresh해야 하는지 여부.
+  const refreshRequestedRef = useRef(false);
+
   // 새로 고침된(정렬된) spaces 배열을 resolve하는 Promise를 반환한다.
   // 실패 시에도 reject하지 않고 null을 resolve한다 — 기존 fire-and-forget 호출부가 unhandled rejection 없이 그대로 동작하도록 하기 위함.
   const refreshSpaces = useCallback(() => {
-    return getSpaces()
-      .then((result) => {
-        const sorted = sortSpaces(result.data ?? []);
-        setSpaces(sorted);
-        setSpacesError(false);
-        return sorted;
-      })
-      .catch(() => {
-        setSpacesError(true);
-        return null;
-      });
-  }, []);
+    if (refreshingRef.current) {
+      refreshRequestedRef.current = true;
+      return refreshingRef.current;
+    }
 
-  // UPDATE_CHAT_ROOM WebSocket 이벤트 처리.
-  // spaceExists === false: 새로 초대된 방은 인라인 추가 대신 전체 재조회로 처리.
-  // lastChatId 역전 시 stale 이벤트 무시.
-  const applySpaceUpdate = useCallback(
-    (data) => {
-      setSpaces((prev) => {
-        const spaceExists = prev.some((r) => r.chatRoomId === data.chatRoomId);
-        if (!spaceExists) {
-          setTimeout(refreshSpaces, 0);
-          return prev;
-        }
-        return sortSpaces(
-          prev.map((space) => {
-            if (space.chatRoomId !== data.chatRoomId) return space;
-            if (
-              data.lastChatId != null &&
-              space.lastChatId != null &&
-              data.lastChatId < space.lastChatId
-            ) {
-              return space;
-            }
-            return {
-              ...space,
-              title: data.title ?? space.title,
-              lastMessage: data.lastMessage,
-              createdDate: data.createdDate,
-              lastChatId: data.lastChatId,
-              unreadMessageCount: data.unreadMessageCount,
-            };
-          })
-        );
-      });
-    },
-    [refreshSpaces]
-  );
+    const run = () =>
+      getSpaces()
+        .then((result) => {
+          const sorted = sortSpaces(result.data ?? []);
+          setSpaces(sorted);
+          setSpacesError(false);
+          return sorted;
+        })
+        .catch(() => {
+          setSpacesError(true);
+          return null;
+        })
+        .finally(() => {
+          if (refreshRequestedRef.current) {
+            refreshRequestedRef.current = false;
+            refreshingRef.current = run();
+          } else {
+            refreshingRef.current = null;
+          }
+        });
+
+    refreshingRef.current = run();
+    return refreshingRef.current;
+  }, []);
 
   const removeSpace = useCallback((spaceId) => {
     setSpaces((prev) => prev.filter((r) => r.chatRoomId !== spaceId));
@@ -97,7 +83,6 @@ export function useSpaces(selectedSpaceId) {
     spacesLoaded,
     selectedSpace,
     refreshSpaces,
-    applySpaceUpdate,
     removeSpace,
     patchSpace,
   };

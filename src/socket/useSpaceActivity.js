@@ -136,5 +136,11 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
     };
   }, [evaluateAndSync]);
 
-  return { notifyEntered };
+  // 현재 spaceId가 active 상태인지 읽기 전용으로 노출 (ref 자체는 캡슐화)
+  const isSpaceActive = useCallback(
+    (spaceId) => activeSpaceIdRef.current === spaceId,
+    []
+  );
+
+  return { notifyEntered, isSpaceActive };
 }
