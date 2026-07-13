@@ -10,7 +10,7 @@ import { useEffect, useRef, useCallback } from "react";
  * 핵심 원칙: activeSpaceIdRef는 전송 결정과 동시에(전송 호출 이전에) 갱신한다.
  * 이렇게 해야 어떤 코드가 ref를 읽더라도 전송 의도와 일치하는 상태를 본다.
  */
-export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive }) {
+export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive, onActivate }) {
   // document가 현재 보이는 상태인지 (다른 탭으로 이동하면 false)
   const isDocumentVisibleRef = useRef(!document.hidden);
   // window가 현재 포커스된 상태인지 (Alt+Tab 등으로 앱 전환하면 false)
@@ -25,9 +25,12 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
   // useCallback 내부에서 최신값 참조용 ref
   const selectedSpaceIdRef = useRef(selectedSpaceId);
   const connectedRef = useRef(connected);
+  // ChatPage가 매 렌더마다 새 함수를 넘겨도 이벤트 리스너/콜백을 재등록하지 않도록 ref로 최신 콜백만 동기화한다
+  const onActivateRef = useRef(onActivate);
 
   useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
   useEffect(() => { connectedRef.current = connected; }, [connected]);
+  useEffect(() => { onActivateRef.current = onActivate; }, [onActivate]);
 
   /**
    * 현재 창 상태(visible + focused)를 기준으로 ACTIVE/INACTIVE를 동기화한다.
@@ -53,6 +56,8 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
         // ref를 먼저 갱신한 뒤 전송 → 전송 후 읽는 코드도 일관된 상태 확인
         activeSpaceIdRef.current = spaceId;
         sendRoomActive(spaceId);
+        // inactive → active로 실제 전환된 순간에만 호출 (이미 active였다면 이 분기에 들어오지 않음)
+        onActivateRef.current?.(spaceId);
       }
     } else {
       // inactive가 되어야 하는데 현재 active로 표시된 방이 있을 때만 전송
@@ -83,7 +88,11 @@ export function useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, s
     if (!isDocumentVisibleRef.current || !isWindowFocusedRef.current) {
       activeSpaceIdRef.current = null;
       sendRoomInactive(spaceId);
+      return;
     }
+
+    // 되돌리지 않고 최종적으로 active로 남는 경우에만 호출 (reconnect 후 재확정 포함)
+    onActivateRef.current?.(spaceId);
   }, [sendRoomInactive]);
 
   // selectedSpaceId가 null이 되면 ROOM_INACTIVE 전송 후 ref null로 초기화

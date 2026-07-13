@@ -1,23 +1,24 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { getSpaces } from "../api/spaceApi";
-
-const sortSpaces = (spaces) =>
-  [...spaces].sort((a, b) => {
-    if (!a.createdDate && !b.createdDate) return 0;
-    if (!a.createdDate) return 1;
-    if (!b.createdDate) return -1;
-    return new Date(b.createdDate) - new Date(a.createdDate);
-  });
+import { applyRoomMessageSummary, mergeSpaceSnapshot } from "../utils/spaceState";
 
 export function useSpaces(selectedSpaceId) {
   const [spaces, setSpaces] = useState([]);
   const [spacesError, setSpacesError] = useState(false);
   const [spacesLoaded, setSpacesLoaded] = useState(false);
 
+  // refreshSpaces가 병합 기준으로 삼는 최신 spaces 스냅샷.
+  // WebSocket이 초기 GET보다 먼저 도착할 수 있으므로(연결 순서상 보장 없음) 항상 최신 spaces를 참조하도록 ref로 동기화한다.
+  const spacesRef = useRef([]);
+  useEffect(() => {
+    spacesRef.current = spaces;
+  }, [spaces]);
+
   useEffect(() => {
     getSpaces()
       .then((result) => {
-        setSpaces(sortSpaces(result.data ?? []));
+        // 초기 GET이 진행되는 동안 이미 WebSocket summary가 반영됐을 수 있으므로 단순 교체가 아닌 병합을 적용한다.
+        setSpaces((prev) => mergeSpaceSnapshot(prev, result.data ?? []));
         setSpacesError(false);
       })
       .catch(() => setSpacesError(true))
@@ -29,7 +30,7 @@ export function useSpaces(selectedSpaceId) {
   // 진행 중인 refresh가 끝난 뒤 한 번 더 refresh해야 하는지 여부.
   const refreshRequestedRef = useRef(false);
 
-  // 새로 고침된(정렬된) spaces 배열을 resolve하는 Promise를 반환한다.
+  // 새로 고침된(병합·정렬된) spaces 배열을 resolve하는 Promise를 반환한다.
   // 실패 시에도 reject하지 않고 null을 resolve한다 — 기존 fire-and-forget 호출부가 unhandled rejection 없이 그대로 동작하도록 하기 위함.
   const refreshSpaces = useCallback(() => {
     if (refreshingRef.current) {
@@ -40,10 +41,13 @@ export function useSpaces(selectedSpaceId) {
     const run = () =>
       getSpaces()
         .then((result) => {
-          const sorted = sortSpaces(result.data ?? []);
-          setSpaces(sorted);
+          // GET 응답이 도착하기 전 더 최신 ROOM_MESSAGE_SUMMARY_UPDATED가 local에 반영됐을 수 있으므로
+          // snapshot으로 무조건 교체하지 않고 mergeSpaceSnapshot으로 최신 local summary를 보존한다.
+          const merged = mergeSpaceSnapshot(spacesRef.current, result.data ?? []);
+          spacesRef.current = merged;
+          setSpaces(merged);
           setSpacesError(false);
-          return sorted;
+          return merged;
         })
         .catch(() => {
           setSpacesError(true);
@@ -60,6 +64,12 @@ export function useSpaces(selectedSpaceId) {
 
     refreshingRef.current = run();
     return refreshingRef.current;
+  }, []);
+
+  // ROOM_MESSAGE_SUMMARY_UPDATED 이벤트를 spaces에 적용한다(중복/역전 무시, unread 갱신, 재정렬은 applyRoomMessageSummary가 담당).
+  // isActiveSpace는 호출부(ChatPage)가 useSpaceActivity의 isSpaceActive(spaceId) 판정을 넘겨준다.
+  const applyMessageSummary = useCallback((event, isActiveSpace) => {
+    setSpaces((prev) => applyRoomMessageSummary(prev, event, isActiveSpace));
   }, []);
 
   const removeSpace = useCallback((spaceId) => {
@@ -83,6 +93,7 @@ export function useSpaces(selectedSpaceId) {
     spacesLoaded,
     selectedSpace,
     refreshSpaces,
+    applyMessageSummary,
     removeSpace,
     patchSpace,
   };

@@ -51,7 +51,7 @@ export default function ChatPage() {
   // enterRoomFailed=true인 실패 중에서 "다시 보내면 성공할 가능성이 있는지". INVALID_REQUEST(FE 요청/프로토콜 오류)처럼 같은 요청을 반복해도 성공할 수 없는 경우에만 false가 된다.
   const [enterRoomRetryable, setEnterRoomRetryable] = useState(true);
 
-  const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, removeSpace, patchSpace } =
+  const { spaces, spacesError, spacesLoaded, selectedSpace, refreshSpaces, applyMessageSummary, removeSpace, patchSpace } =
     useSpaces(selectedSpaceId);
   const [messages, setMessages] = useState([]);
   // FE에서만 존재하는 전송 중 메시지 (echo reconciliation 이전 단계, clientMessageId로 식별)
@@ -135,6 +135,10 @@ export default function ChatPage() {
 
         case "SPACE_INVITED":
           refreshSpaces();
+          break;
+
+        case "ROOM_MESSAGE_SUMMARY_UPDATED":
+          applyMessageSummary(data, isSpaceActiveRef.current(data.chatRoomId));
           break;
 
         case "READ_EVENT": {
@@ -281,6 +285,7 @@ export default function ChatPage() {
     },
     [
       patchSpace,
+      applyMessageSummary,
       appendDiscussionEvent,
       setWsError,
       setEnteredSpaceId,
@@ -294,7 +299,22 @@ export default function ChatPage() {
 
   const { connected, reconnecting, sendEnterRoom, sendChatMessage, sendRoomActive, sendRoomInactive, sendReadUpTo, sendDiscussionMessage } = useWebSocket(handleMessage);
 
-  const { notifyEntered, isSpaceActive } = useSpaceActivity({ selectedSpaceId, connected, sendRoomActive, sendRoomInactive });
+  // 세션이 특정 Space에 대해 실제로 inactive → active로 전환된 순간에만 호출된다 (useSpaceActivity 참고).
+  // 방 선택 시점의 낙관적 초기화(handleSelectSpace)와는 별개로, 서버 activity 정책과 동일한 시점에 unread를 최종 보정한다.
+  const handleSpaceActivated = useCallback(
+    (spaceId) => {
+      patchSpace(spaceId, { unreadMessageCount: 0 });
+    },
+    [patchSpace]
+  );
+
+  const { notifyEntered, isSpaceActive } = useSpaceActivity({
+    selectedSpaceId,
+    connected,
+    sendRoomActive,
+    sendRoomInactive,
+    onActivate: handleSpaceActivated,
+  });
 
   // handleMessage(ENTER_ROOM_ACK)가 최신 notifyEntered를 참조하도록 매 렌더마다 동기화한다
   useEffect(() => {
